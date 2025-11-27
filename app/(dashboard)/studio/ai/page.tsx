@@ -120,36 +120,39 @@ export default function AIStudioPage() {
   }
 
   const handleExport = useCallback(
-    (dataUrl: string) => {
+    async (dataUrl: string) => {
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
 
-      addPost({
-        id: Date.now().toString(),
-        title: topic || "Untitled Post",
-        content,
-        template: selectedTemplate.id,
-        platform,
-        createdAt: new Date(),
-        thumbnail: dataUrl,
-        author,
-        gradient: backgroundType === "gradient" ? gradient : undefined,
-        backgroundColor: backgroundType === "solid" ? backgroundColor : undefined,
-        borderColor,
-        borderWidth,
-        textColor,
-        accentColor,
-        fontFamily,
-        fontWeight,
-        fontSize,
-        textAlign,
-        padding,
-        backgroundImage: backgroundImage || undefined,
-      })
+      try {
+        await addPost({
+          title: topic || "Untitled Post",
+          content,
+          template: selectedTemplate.id,
+          platform,
+          thumbnail: dataUrl,
+          author,
+          gradient: backgroundType === "gradient" ? gradient : undefined,
+          backgroundColor: backgroundType === "solid" ? backgroundColor : undefined,
+          borderColor,
+          borderWidth,
+          textColor,
+          accentColor,
+          fontFamily,
+          fontWeight,
+          fontSize,
+          textAlign,
+          padding,
+          backgroundImage: backgroundImage || undefined,
+        })
 
-      toast.success("Post exported successfully!")
+        toast.success("Post exported and saved to history!")
+      } catch (error) {
+        console.error("Failed to save post:", error)
+        toast.error("Exported, but failed to save to history")
+      }
     },
     [
       platform,

@@ -219,11 +219,10 @@ export default function ProfilePage() {
                       <Coins className="h-4 w-4 text-primary" />
                       <span className="font-medium">AI Credits</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {user?.credits || 0} / {getPlanCreditsMax(user?.plan || "free")} available
+                    <span className="text-lg font-bold text-primary">
+                      {user?.credits || 0}
                     </span>
                   </div>
-                  <Progress value={creditsPercentage} className="h-2" />
                   <p className="text-xs text-muted-foreground">Credits are used for AI-powered content generation</p>
                 </div>
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe/config'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
 /**
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
         )
     }
 
-    const supabase = await createClient()
+    // Use Admin Client (Service Role) to bypass RLS
+    const supabase = createAdminClient()
 
     try {
         switch (event.type) {

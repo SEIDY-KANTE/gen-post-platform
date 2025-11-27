@@ -40,8 +40,8 @@ interface AppState {
   setUser: (user: User | null) => void
   consumeCredit: () => Promise<boolean>
   addCredits: (amount: number) => void
-  addPost: (post: GeneratedPost) => void
-  deletePost: (id: string) => void
+  addPost: (post: Omit<GeneratedPost, "id" | "createdAt">) => Promise<void>
+  deletePost: (id: string) => Promise<void>
   updatePlan: (plan: "free" | "premium" | "pro", credits?: number) => void
   fetchUser: (userId: string) => Promise<void>
   fetchPosts: (userId: string) => Promise<void>
@@ -183,12 +183,78 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({ user: { ...user, credits: user.credits + amount } })
   },
 
-  addPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
+  addPost: async (post) => {
+    const { user } = get()
+    if (!user) return
 
-  deletePost: (id) =>
+    const supabase = createClient()
+
+    // Prepare data for Supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dbPost: any = {
+      user_id: user.id,
+      title: post.title,
+      content: post.content,
+      template_id: post.template,
+      platform: post.platform,
+      thumbnail_url: post.thumbnail,
+      author: post.author,
+      design_config: {
+        gradient: post.gradient,
+        backgroundColor: post.backgroundColor,
+        borderColor: post.borderColor,
+        borderWidth: post.borderWidth,
+        textColor: post.textColor,
+        accentColor: post.accentColor,
+        fontFamily: post.fontFamily,
+        fontWeight: post.fontWeight,
+        fontSize: post.fontSize,
+        textAlign: post.textAlign,
+        padding: post.padding,
+        backgroundImage: post.backgroundImage,
+      },
+    }
+
+    const { data, error } = await supabase
+      .from("posts")
+      .insert(dbPost)
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Error saving post:", error)
+      return
+    }
+
+    if (data) {
+      const newPost: GeneratedPost = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        template: data.template_id || "",
+        platform: data.platform || "",
+        createdAt: new Date(data.created_at),
+        thumbnail: data.thumbnail_url || undefined,
+        author: data.author || undefined,
+        ...(data.design_config as object),
+      }
+      set((state) => ({ posts: [newPost, ...state.posts] }))
+    }
+  },
+
+  deletePost: async (id) => {
+    const supabase = createClient()
+    const { error } = await supabase.from("posts").delete().eq("id", id)
+
+    if (error) {
+      console.error("Error deleting post:", error)
+      return
+    }
+
     set((state) => ({
       posts: state.posts.filter((post) => post.id !== id),
-    })),
+    }))
+  },
 
   updatePlan: (plan, credits) => {
     const { user } = get()

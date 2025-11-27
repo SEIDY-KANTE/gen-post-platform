@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { useAppStore } from "@/lib/store"
+import { useAuth } from "@/lib/hooks/useAuth"
 
 export default function DashboardLayout({
   children,
@@ -13,15 +14,23 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { isAuthenticated } = useAppStore()
+  const { isAuthenticated, fetchUser } = useAppStore()
+  const { user } = useAuth()
+
+  // Initialize user data on mount if authenticated
+  useEffect(() => {
+    if (user?.id && !isAuthenticated) {
+      fetchUser(user.id)
+    }
+  }, [user?.id, isAuthenticated, fetchUser])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !user) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user, router])
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !user) {
     return null
   }
 
