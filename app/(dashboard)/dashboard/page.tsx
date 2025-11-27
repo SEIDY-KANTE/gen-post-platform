@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
+import { templates } from "@/lib/templates"
 import { Wand2, Palette, Layout, TrendingUp, Sparkles, ArrowRight, Coins } from "lucide-react"
 
 export default function DashboardPage() {
@@ -47,11 +48,25 @@ export default function DashboardPage() {
     },
   ]
 
+  // Calculate unique templates used
+  const uniqueTemplates = new Set(posts.map(p => p.template)).size
+
   const stats = [
     { label: "Posts Created", value: posts.length, icon: TrendingUp },
     { label: "Credits Left", value: user?.credits || 0, icon: Coins },
-    { label: "Templates Used", value: 0, icon: Layout },
+    { label: "Templates Used", value: uniqueTemplates, icon: Layout },
   ]
+
+  const getTemplateForPost = (post: typeof posts[0]) => {
+    return templates.find((t) => t.id === post.template) || templates[0]
+  }
+
+  const getPostBackground = (post: typeof posts[0]) => {
+    if (post.gradient) return post.gradient
+    if (post.backgroundColor) return post.backgroundColor
+    const template = getTemplateForPost(post)
+    return template.gradient || template.backgroundColor || "#667eea"
+  }
 
   return (
     <div className="min-h-screen">
@@ -129,13 +144,33 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {posts.slice(0, 4).map((post) => (
-                <Card key={post.id}>
-                  <div className="aspect-square bg-muted" />
-                  <CardContent className="p-4">
-                    <h3 className="font-medium truncate">{post.title}</h3>
-                    <p className="text-xs text-muted-foreground">{new Date(post.createdAt).toLocaleDateString()}</p>
-                  </CardContent>
-                </Card>
+                <Link key={post.id} href="/history">
+                  <Card className="group overflow-hidden transition-all hover:shadow-lg cursor-pointer">
+                    <div
+                      className="relative aspect-square"
+                      style={{
+                        background: getPostBackground(post),
+                        border: post.borderColor ? `${post.borderWidth || 2}px solid ${post.borderColor}` : "none",
+                      }}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <p
+                          className="line-clamp-4 text-center text-sm font-medium"
+                          style={{
+                            color: post.textColor || getTemplateForPost(post).textColor,
+                            fontFamily: post.fontFamily || getTemplateForPost(post).fontFamily,
+                          }}
+                        >
+                          {post.content}
+                        </p>
+                      </div>
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-medium truncate">{post.title}</h3>
+                      <p className="text-xs text-muted-foreground">{new Date(post.createdAt).toLocaleDateString()}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}

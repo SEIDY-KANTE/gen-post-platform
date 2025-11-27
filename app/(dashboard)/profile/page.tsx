@@ -9,22 +9,42 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
 import { useAppStore } from "@/lib/store"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-import { User, Mail, Shield, Coins, Camera, Crown, Zap, BarChart3, Calendar, CreditCard } from "lucide-react"
+import { User, Mail, Shield, Coins, Camera, Crown, Zap, BarChart3, Calendar, CreditCard, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 export default function ProfilePage() {
   const { user, setUser, posts } = useAppStore()
   const [name, setName] = useState(user?.name || "")
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = () => {
-    if (user) {
+  const handleSave = async () => {
+    if (!user) return
+
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ name })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      // Update local state
       setUser({ ...user, name })
       toast.success("Profile updated successfully")
       setIsEditing(false)
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error("Failed to update profile")
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -156,8 +176,17 @@ export default function ProfilePage() {
 
                 {isEditing && (
                   <div className="flex gap-2 pt-2">
-                    <Button onClick={handleSave}>Save Changes</Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    <Button onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
                       Cancel
                     </Button>
                   </div>
