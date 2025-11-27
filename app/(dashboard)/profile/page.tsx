@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,14 +12,28 @@ import { Separator } from "@/components/ui/separator"
 import { useAppStore } from "@/lib/store"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-import { User, Mail, Shield, Coins, Camera, Crown, Zap, BarChart3, Calendar, CreditCard, Loader2 } from "lucide-react"
+import { User, Mail, Shield, Coins, Camera, Crown, Zap, BarChart3, Calendar, CreditCard, Loader2, X } from "lucide-react"
 import Link from "next/link"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ProfilePage() {
   const { user, setUser, posts } = useAppStore()
   const [name, setName] = useState(user?.name || "")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSave = async () => {
     if (!user) return
@@ -45,6 +59,90 @@ export default function ProfilePage() {
       toast.error("Failed to update profile")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !user) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file")
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be less than 2MB")
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    try {
+      const supabase = createClient()
+
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user.id} -${Date.now()}.${fileExt} `
+      const filePath = `avatars / ${fileName} `
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // Update user profile
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      // Update local state
+      setUser({ ...user, avatar: publicUrl })
+      toast.success("Profile picture updated!")
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      toast.error("Failed to upload profile picture")
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
+
+  const handleCancelSubscription = async () => {
+    if (!user) return
+
+    setIsCancelling(true)
+    try {
+      const response = await fetch('/api/payment/cancel-subscription', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel subscription')
+      }
+
+      // Update local state
+      setUser({ ...user, plan: 'free' })
+      toast.success("Subscription cancelled successfully")
+      setShowCancelDialog(false)
+    } catch (error) {
+      console.error('Error cancelling subscription:', error)
+      toast.error("Failed to cancel subscription")
+    } finally {
+      setIsCancelling(false)
     }
   }
 
@@ -91,9 +189,24 @@ export default function ProfilePage() {
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <button className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Camera className="h-6 w-6 text-white" />
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={isUploadingAvatar}
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed"
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-6 w-6 text-white" />
+                      )}
                     </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
                   </div>
 
                   <h2 className="mt-4 text-xl font-semibold">{user?.name || "User"}</h2>
@@ -106,7 +219,7 @@ export default function ProfilePage() {
                     ) : (
                       <>
                         <Crown className="mr-1 h-3 w-3" />
-                        {user?.plan === "pro" ? "Pro" : "Enterprise"} Plan
+                        {user?.plan === "premium" ? "Premium" : "Pro"} Plan
                       </>
                     )}
                   </Badge>
@@ -209,7 +322,7 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${getPlanColor(user?.plan || "free")}`}
+                        className={`flex h - 10 w - 10 items - center justify - center rounded - full ${getPlanColor(user?.plan || "free")} `}
                       >
                         {user?.plan === "free" ? (
                           <Zap className="h-5 w-5 text-foreground" />
@@ -219,14 +332,14 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="font-semibold">
-                          {user?.plan === "free" ? "Free Plan" : user?.plan === "pro" ? "Pro Plan" : "Enterprise Plan"}
+                          {user?.plan === "free" ? "Free Plan" : user?.plan === "premium" ? "Premium Plan" : "Pro Plan"}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {user?.plan === "free"
                             ? "Basic features included"
-                            : user?.plan === "pro"
-                              ? "All features + priority support"
-                              : "Unlimited + dedicated support"}
+                            : user?.plan === "premium"
+                              ? "Premium features included"
+                              : "Pro features included"}
                         </p>
                       </div>
                     </div>
@@ -237,6 +350,17 @@ export default function ProfilePage() {
                           Upgrade
                         </Button>
                       </Link>
+                    )}
+                    {(user?.plan === "premium" || user?.plan === "pro") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-destructive hover:bg-destructive/10"
+                        onClick={() => setShowCancelDialog(true)}
+                      >
+                        <X className="h-3 w-3" />
+                        Cancel Plan
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -320,6 +444,34 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel your subscription? You'll lose access to premium features and your plan will be downgraded to Free.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSubscription}
+              disabled={isCancelling}
+              className="bg-destructive text-primary hover:bg-destructive/90"
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Cancel Subscription"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
