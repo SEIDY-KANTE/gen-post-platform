@@ -1,14 +1,27 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/lib/store"
+import { useAuth } from "@/lib/hooks/useAuth"
 import { Wand2, Palette, Layout, TrendingUp, Sparkles, ArrowRight, Coins } from "lucide-react"
 
 export default function DashboardPage() {
-  const { user, posts } = useAppStore()
+  const { user: authUser } = useAuth()
+  const { user, posts, fetchUser, fetchPosts } = useAppStore()
+
+  // Fetch user data and posts on mount
+  useEffect(() => {
+    if (authUser?.id && !user) {
+      fetchUser(authUser.id)
+    }
+    if (authUser?.id) {
+      fetchPosts(authUser.id)
+    }
+  }, [authUser?.id, user, fetchUser, fetchPosts])
 
   const quickActions = [
     {

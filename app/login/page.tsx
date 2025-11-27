@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sparkles, Mail, Lock, User } from "lucide-react"
+import { useAuth } from "@/lib/hooks/useAuth"
 import { useAppStore } from "@/lib/store"
 import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAppStore()
+  const { signIn, signUp } = useAuth()
+  const { fetchUser } = useAppStore()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,11 +29,35 @@ export default function LoginPage() {
     const password = formData.get("password") as string
 
     try {
-      await login(email, password)
+      const { user } = await signIn(email, password)
+
+      // Fetch user data from database to update store
+      if (user) {
+        await fetchUser(user.id)
+      }
+
       toast.success("Welcome back!")
       router.push("/dashboard")
-    } catch (error) {
-      toast.error("Login failed. Please try again.")
+    } catch (error: unknown) {
+      console.error('Login error:', error)
+
+      // Better error messages
+      let errorMessage = "Login failed. Please try again."
+
+      if (error instanceof Error) {
+        // Handle common Supabase auth errors
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please check and try again."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please confirm your email before logging in."
+        } else if (error.message.includes("User not found")) {
+          errorMessage = "No account found with this email."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -41,15 +67,40 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
+    const name = formData.get("name") as string
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
     try {
-      await login(email, password)
+      const { user } = await signUp(email, password, name)
+
+      // Fetch user data from database to update store
+      if (user) {
+        await fetchUser(user.id)
+      }
+
       toast.success("Account created! You received 5 free credits.")
       router.push("/dashboard")
-    } catch (error) {
-      toast.error("Signup failed. Please try again.")
+    } catch (error: unknown) {
+      console.error('Signup error:', error)
+
+      // Better error messages
+      let errorMessage = "Signup failed. Please try again."
+
+      if (error instanceof Error) {
+        // Handle common Supabase auth errors
+        if (error.message.includes("User already registered")) {
+          errorMessage = "This email is already registered. Please sign in instead."
+        } else if (error.message.includes("Password should be at least")) {
+          errorMessage = "Password must be at least 6 characters long."
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "Please enter a valid email address."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -161,11 +212,11 @@ export default function LoginPage() {
 
       <p className="mt-6 text-sm text-muted-foreground">
         By continuing, you agree to our{" "}
-        <Link href="#" className="underline hover:text-foreground">
+        <Link href="/terms" className="underline hover:text-foreground">
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="#" className="underline hover:text-foreground">
+        <Link href="/privacy" className="underline hover:text-foreground">
           Privacy Policy
         </Link>
       </p>

@@ -1,157 +1,209 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { useAppStore } from "@/lib/store"
-import { Coins, Check, Zap, Sparkles, TrendingUp, Calendar, Crown } from "lucide-react"
-
-const creditPacks = [
-  { id: "pack-10", credits: 10, price: 2, pricePerCredit: 0.2000 },
-  { id: "pack-20", credits: 20, price: 3.99, pricePerCredit: 0.1995, popular: true },
-  { id: "pack-50", credits: 50, price: 5.99, pricePerCredit: 0.1198, bestValue: true },
-  { id: "pack-100", credits: 100, price: 12, pricePerCredit: 0.1200 },
-]
-
-const subscriptionPlans = [
-  {
-    id: "free",
-    name: "Free",
-    price: 0,
-    credits: 5,
-    period: "one-time",
-    icon: Sparkles,
-    features: [
-      "5 AI generations",
-      "Basic templates",
-      "Standard export quality",
-      "No watermark",
-      "Preset backgrounds only",
-    ],
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: 4.99,
-    credits: 60,
-    period: "month",
-    icon: Zap,
-    popular: true,
-    features: [
-      "60 AI generations/month",
-      "All premium templates",
-      "High-quality exports",
-      "No watermark",
-      "Custom backgrounds",
-      "Priority support",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 9.99,
-    credits: 150,
-    period: "month",
-    icon: Crown,
-    features: [
-      "150 AI generations/month",
-      "All templates + exclusive",
-      "4K export quality",
-      "No watermark",
-      "Custom backgrounds",
-      "AI image generation",
-      "Background image upload",
-      "Priority support",
-    ],
-  },
-]
+import { STRIPE_PRODUCTS, formatPrice } from "@/lib/stripe/client-config"
+import { Loader2, Check, Zap, Crown, Sparkles } from "lucide-react"
+import { toast } from "sonner"
 
 export default function CreditsPage() {
-  const router = useRouter()
   const { user } = useAppStore()
-  const [isProcessing, setIsProcessing] = useState<string | null>(null)
+  const [loading, setLoading] = useState<string | null>(null)
 
-  const handleBuyCredits = async (packId: string, credits: number, price: number) => {
-    setIsProcessing(packId)
-    // Redirect to payment page with pack info
-    router.push(`/payment?type=credits&pack=${packId}&credits=${credits}&price=${price}`)
+  const handlePurchase = async (productId: string) => {
+    setLoading(productId)
+
+    try {
+      const response = await fetch("/api/payment/create-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ productId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout")
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error("Purchase error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to start checkout"
+      toast.error(errorMessage)
+      setLoading(null)
+    }
   }
 
-  const handleSubscribe = async (planId: string, price: number, planName: string) => {
-    if (planId === "free") return
-    setIsProcessing(planId)
-    // Redirect to payment page with subscription info
-    router.push(`/payment?type=subscription&plan=${planId}&price=${price}&name=${planName}`)
-  }
+  const creditPackages = [
+    {
+      id: "credits_10",
+      ...STRIPE_PRODUCTS.credits_10,
+      icon: Sparkles,
+      popular: false,
+      bestValue: false,
+    },
+    {
+      id: "credits_20",
+      ...STRIPE_PRODUCTS.credits_20,
+      icon: Sparkles,
+      popular: true,
+      bestValue: false,
+    },
+    {
+      id: "credits_50",
+      ...STRIPE_PRODUCTS.credits_50,
+      icon: Zap,
+      popular: false,
+      bestValue: true,
+    },
+    {
+      id: "credits_100",
+      ...STRIPE_PRODUCTS.credits_100,
+      icon: Crown,
+      popular: false,
+      bestValue: false,
+    },
+  ]
 
-  const usagePercentage = user ? Math.min(((5 - user.credits) / 5) * 100, 100) : 0
+  const subscriptionPlans = [
+    {
+      id: "free",
+      name: "Free",
+      description: "Free plan",
+      credits: 0,
+      price: 0,
+      recurring: "month" as const,
+      priceId: "",
+      icon: Sparkles,
+      features: [
+        "5 AI generations",
+        "Basic templates",
+        "Standard export quality",
+        "Preset backgrounds only",
+      ],
+      currentPlan: user?.plan === "free",
+      popular: false,
+    },
+    {
+      id: "premium",
+      ...STRIPE_PRODUCTS.premium,
+      icon: Zap,
+      features: [
+        "All free features",
+        "60 AI generations/month",
+        "All premium templates",
+        "High-quality exports",
+        "Custom backgrounds",
+      ],
+      currentPlan: user?.plan === "premium",
+      popular: true,
+    },
+    {
+      id: "pro",
+      ...STRIPE_PRODUCTS.pro,
+      icon: Crown,
+      features: [
+       "150 AI generations/month",
+       "All templates + exclusive",
+       "4K export quality",
+       "Custom backgrounds",
+       "AI image generation",
+       "Background image upload",
+       "Priority support",
+      ],
+      currentPlan: user?.plan === "pro",
+      popular: false,
+    },
+  ]
 
   return (
     <div className="min-h-screen">
-      <DashboardHeader title="Credits & Subscription" description="Manage your credits and subscription plan" />
+      <DashboardHeader
+        title="Credits & Plans"
+        description="Purchase credits or upgrade to a subscription plan"
+      />
 
       <div className="p-6 space-y-8 max-w-6xl mx-auto">
         {/* Current Credits */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                  <Coins className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Available Credits</p>
-                  <p className="text-4xl font-bold">{user?.credits || 0}</p>
-                </div>
-              </div>
-              <div className="flex-1 max-w-xs">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Usage this month</span>
-                  <span className="font-medium">{5 - (user?.credits || 0)} / 5 used</span>
-                </div>
-                <Progress value={usagePercentage} className="h-2" />
-              </div>
+          <CardContent className="flex items-center justify-between p-6">
+            <div>
+              <h3 className="text-lg font-semibold">Current Credits</h3>
+              <p className="text-sm text-muted-foreground">
+                You have {user?.credits || 0} credits remaining
+              </p>
+            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <span className="text-2xl font-bold text-primary">
+                {user?.credits || 0}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Credit Packs */}
+        {/* Credit Packages */}
         <div>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold">Buy Credit Packs</h2>
-            <p className="text-muted-foreground">One-time purchase, no subscription required</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {creditPacks.map((pack) => (
+          <h2 className="mb-4 text-2xl font-bold">One-Time Credit Packs</h2>
+          <div className="grid gap-4 md:grid-cols-4">
+            {creditPackages.map((pkg) => (
               <Card
-                key={pack.id}
-                className={`relative transition-all hover:border-primary ${
-                  pack.popular ? "border-primary" : ""
-                } ${pack.bestValue ? "ring-2 ring-primary" : ""}`}
+                key={pkg.id}
+                className={pkg.popular ? "border-primary shadow-lg" : ""}
               >
-                {pack.popular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2">Popular</Badge>}
-                {pack.bestValue && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-secondary text-primary">Best Value</Badge>
-                )}
-                <CardContent className="p-6 text-center">
-                  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10">
-                    <Coins className="h-6 w-6 text-primary" />
+                {pkg.popular && (
+                  <div className="flex justify-center">
+                    <Badge className="rounded-b-md rounded-t-none">
+                      Most Popular
+                    </Badge>
                   </div>
-                  <p className="mt-4 text-3xl font-bold">{pack.credits}</p>
-                  <p className="text-sm text-muted-foreground">credits</p>
-                  <p className="mt-4 text-2xl font-semibold">${pack.price}</p>
-                  <p className="text-xs text-muted-foreground">${pack.pricePerCredit.toFixed(2)} per credit</p>
+                )}
+                {
+                  pkg.bestValue && (
+                    <div className="flex justify-center">
+                      <Badge className="rounded-b-md rounded-t-none bg-green-500 text-white">
+                        Best Value
+                      </Badge>
+                    </div>
+                  )
+                }
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <pkg.icon className="h-8 w-8 text-primary" />
+                    <span className="text-3xl font-bold">
+                      {formatPrice(pkg.price)}
+                    </span>
+                  </div>
+                  <CardTitle className="text-xl">{pkg.name}</CardTitle>
+                  <CardDescription>{pkg.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{pkg.credits}</span>
+                    <span className="text-muted-foreground">credits</span>
+                  </div>
                   <Button
-                    className="mt-6 w-full"
-                    onClick={() => handleBuyCredits(pack.id, pack.credits, pack.price)}
-                    disabled={isProcessing === pack.id}
+                    className="w-full"
+                    onClick={() => handlePurchase(pkg.id)}
+                    disabled={loading === pkg.id}
                   >
-                    {isProcessing === pack.id ? "Processing..." : "Buy Now"}
+                    {loading === pkg.id ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Purchase"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
@@ -161,93 +213,70 @@ export default function CreditsPage() {
 
         {/* Subscription Plans */}
         <div>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold">Subscription Plans</h2>
-            <p className="text-muted-foreground">Get more credits every month with a subscription</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {subscriptionPlans.map((plan) => {
-              const isCurrentPlan = user?.plan === plan.id
-              return (
-                <Card
-                  key={plan.id}
-                  className={`relative ${
-                    plan.popular ? "border-primary shadow-lg" : ""
-                  } ${isCurrentPlan ? "ring-2 ring-primary" : ""}`}
-                >
-                  {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Most Popular</Badge>}
-                  {isCurrentPlan && (
-                    <Badge variant="secondary" className="absolute -top-3 right-4">
-                      Current Plan
-                    </Badge>
-                  )}
-                  <CardHeader className="text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                      <plan.icon className="h-7 w-7 text-primary" />
-                    </div>
-                    <CardTitle className="mt-4">{plan.name}</CardTitle>
-                    <CardDescription>
-                      <span className="text-3xl font-bold text-foreground">${plan.price}</span>
-                      {plan.period !== "one-time" && <span className="text-muted-foreground">/{plan.period}</span>}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-center gap-2 rounded-lg bg-muted p-3">
-                      <Coins className="h-5 w-5 text-primary" />
-                      <span className="font-medium">
-                        {plan.credits} credits
-                        {plan.period !== "one-time" && "/month"}
-                      </span>
-                    </div>
-
-                    <ul className="space-y-2">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Button
-                      className="w-full"
-                      variant={isCurrentPlan ? "outline" : "default"}
-                      disabled={isCurrentPlan || isProcessing === plan.id}
-                      onClick={() => handleSubscribe(plan.id, plan.price, plan.name)}
-                    >
-                      {isCurrentPlan
-                        ? "Current Plan"
-                        : isProcessing === plan.id
-                          ? "Processing..."
-                          : plan.id === "free"
-                            ? "Current Plan"
-                            : "Subscribe"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
+          <h2 className="mb-4 text-2xl font-bold">Subscription Plans</h2>
+          <p className="mb-6 text-muted-foreground">
+            Get credits every month with our subscription plans
+          </p>
+          <div className="grid gap-6 md:grid-cols-3">
+            {subscriptionPlans.map((plan) => (
+              <Card key={plan.id}
+                className={plan.popular ? "border-primary border-2 mb-4 -mt-4 shadow-xl" : ""}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <plan.icon className="h-10 w-10 text-primary" />
+                    {plan.id === "pro" && (
+                      <Badge variant="secondary">
+                        <Crown className="mr-1 h-3 w-3" />
+                        Best Value
+                      </Badge>
+                    )}
+                    {plan.currentPlan && (
+                      <Badge variant="secondary">
+                        Current Plan
+                      </Badge>
+                    )}
+                  </div>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
+                  <div className="flex items-baseline gap-1 pt-4">
+                    <span className="text-4xl font-bold">
+                      {formatPrice(plan.price)}
+                    </span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full"
+                    variant={plan.id === "pro" ? "default" : "outline"}
+                    onClick={() => handlePurchase(plan.id)}
+                    disabled={loading === plan.id || user?.plan === plan.id}
+                  >
+                    {loading === plan.id ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : user?.plan === plan.id ? (
+                      "Current Plan"
+                    ) : (
+                      "Subscribe"
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-
-        {/* Usage History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Recent Usage
-            </CardTitle>
-            <CardDescription>Your credit usage history</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No usage history yet</p>
-              <p className="text-sm">Your AI generation history will appear here</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

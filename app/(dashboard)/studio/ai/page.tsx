@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon } from "lucide-react"
 
 export default function AIStudioPage() {
-  const { user, consumeCredit, addPost } = useAppStore()
+  const { user, setUser, consumeCredit, addPost } = useAppStore()
   const [topic, setTopic] = useState("")
   const [style, setStyle] = useState("motivational")
   const [tone, setTone] = useState("professional")
@@ -41,13 +41,15 @@ export default function AIStudioPage() {
   const [accentColor, setAccentColor] = useState(templates[0].accentColor || "")
   const [fontFamily, setFontFamily] = useState(templates[0].fontFamily)
   const [fontWeight, setFontWeight] = useState(templates[0].fontWeight || 700)
-  const [fontSize, setFontSize] = useState(templates[0].fontSize)
+  // const [fontSize, setFontSize] = useState(templates[0].fontSize)
+  const [fontSize, setFontSize] = useState(20)
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">(templates[0].textAlign)
   const [padding, setPadding] = useState(templates[0].padding)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [activeTab, setActiveTab] = useState("templates")
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
 
@@ -64,28 +66,57 @@ export default function AIStudioPage() {
 
     setIsGenerating(true)
 
-    // Simulate AI generation (replace with actual AI call)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      // Call the real AI API
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic,
+          style,
+          tone,
+          platform,
+        }),
+      })
 
-    // Mock generated content based on style
-    const mockResponses: Record<string, string> = {
-      motivational: `${topic}. Every step forward is a step toward greatness. Believe in yourself and make it happen!`,
-      business: `${topic}: The key to success in today's market. Transform your approach and see results.`,
-      educational: `Did you know? ${topic} - Here's what you need to understand about this important topic.`,
-      humorous: `${topic}? More like "${topic} but make it interesting!" Let's talk about this...`,
-      inspirational: `${topic} - The journey of a thousand miles begins with a single step. Your time is now.`,
-      promotional: `Introducing: ${topic}! Limited time offer. Don't miss out on this amazing opportunity.`,
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 401) {
+          toast.error("Please login to generate content")
+          return
+        }
+        if (response.status === 403) {
+          toast.error("Insufficient credits. Please purchase more.")
+          setShowCreditsModal(true)
+          return
+        }
+        throw new Error(data.error || 'Generation failed')
+      }
+
+      // Set the generated content
+      setContent(data.content)
+
+      // Switch to text tab to allow editing
+      setActiveTab("text")
+
+      // Update credits in store (optimistic update)
+      if (user) {
+        const newCredits = data.creditsRemaining ?? user.credits - 1
+        setUser({ ...user, credits: newCredits })
+      }
+
+      toast.success(`Content generated! ${data.creditsRemaining ?? user.credits - 1} credits remaining.`)
+    } catch (error) {
+      console.error('Generation error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate content'
+      toast.error(errorMessage)
+    } finally {
+      setIsGenerating(false)
     }
-
-    const generatedText = mockResponses[style] || mockResponses.motivational
-    setContent(generatedText)
-
-    const success = consumeCredit()
-    if (success) {
-      toast.success("Content generated! 1 credit used.")
-    }
-
-    setIsGenerating(false)
   }
 
   const handleExport = useCallback(
@@ -299,9 +330,10 @@ export default function AIStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="templates">
-                  <TabsList className="grid w-full grid-cols-3">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="templates">Templates</TabsTrigger>
+                    <TabsTrigger value="text">Text</TabsTrigger>
                     <TabsTrigger value="style">Style</TabsTrigger>
                     <TabsTrigger value="image" className="gap-1">
                       <ImageIcon className="h-3 w-3" />
@@ -315,9 +347,8 @@ export default function AIStudioPage() {
                         <button
                           key={template.id}
                           onClick={() => handleTemplateSelect(template)}
-                          className={`relative aspect-square rounded-lg p-2 text-xs font-medium transition-all ${
-                            selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
-                          }`}
+                          className={`relative aspect-square rounded-lg p-2 text-xs font-medium transition-all ${selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
+                            }`}
                           style={{
                             background:
                               template.backgroundType === "gradient" ? template.gradient : template.backgroundColor,
@@ -331,6 +362,28 @@ export default function AIStudioPage() {
                           {template.isPremium && <Crown className="absolute right-1 top-1 h-3 w-3 text-yellow-400" />}
                         </button>
                       ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="text" className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="content-edit">Post Content</Label>
+                      <Textarea
+                        id="content-edit"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={6}
+                        placeholder="Generated content will appear here..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="author-edit">Author / Brand</Label>
+                      <Input
+                        id="author-edit"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        placeholder="Your name"
+                      />
                     </div>
                   </TabsContent>
 

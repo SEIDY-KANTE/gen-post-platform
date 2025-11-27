@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,16 +25,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useAppStore, type GeneratedPost } from "@/lib/store"
+import { useAuth } from "@/lib/hooks/useAuth"
 import { templates, type PlatformKey } from "@/lib/templates"
 import { Sparkles, Download, Trash2, Eye, Calendar, Layout } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
 export default function HistoryPage() {
-  const { posts, deletePost } = useAppStore()
+  const { user } = useAuth()
+  const { posts, fetchPosts, deletePost } = useAppStore()
   const [viewingPost, setViewingPost] = useState<GeneratedPost | null>(null)
   const [deletingPost, setDeletingPost] = useState<GeneratedPost | null>(null)
   const [exportTrigger, setExportTrigger] = useState(0)
+
+  // Fetch posts on mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchPosts(user.id)
+    }
+  }, [user?.id, fetchPosts])
 
   const handleExportClick = () => {
     setExportTrigger((t) => t + 1)
@@ -49,11 +58,26 @@ export default function HistoryPage() {
     toast.success("Post exported successfully!")
   }
 
-  const handleDelete = () => {
-    if (deletingPost) {
+  const handleDelete = async () => {
+    if (!deletingPost) return
+
+    try {
+      // Call API to delete from database
+      const response = await fetch(`/api/posts/${deletingPost.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete post')
+      }
+
+      // Update local state
       deletePost(deletingPost.id)
       toast.success("Post deleted")
       setDeletingPost(null)
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error("Failed to delete post")
     }
   }
 
