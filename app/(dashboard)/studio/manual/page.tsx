@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Crown,
   ImageIcon,
+  Lock,
 } from "lucide-react"
 import { ExportDialog } from "@/components/studio/export-dialog"
 
@@ -67,7 +68,8 @@ export default function ManualStudioPage() {
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showExportDialog, setShowExportDialog] = useState(false)
 
-  const isPro = user?.plan === "pro" || user?.plan === "enterprise"
+  const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
+  const canUseImages = user?.plan === "pro"
 
   const handleExport = useCallback(
     (dataUrl: string) => {
@@ -147,8 +149,8 @@ export default function ManualStudioPage() {
   }
 
   const applyTemplate = (template: Template) => {
-    if (template.isPremium && !isPro) {
-      toast.error("This template requires a Pro subscription")
+    if (template.isPremium && user?.plan === "free") {
+      toast.error("This template requires a Premium or Pro subscription")
       return
     }
 
@@ -251,11 +253,23 @@ export default function ManualStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs value={backgroundType} onValueChange={(v) => setBackgroundType(v as typeof backgroundType)}>
+                <Tabs
+                  value={backgroundType}
+                  onValueChange={(v) => {
+                    if (v === "custom" && !canUseCustomBackground) {
+                      toast.error("Custom backgrounds require a Premium or Pro subscription")
+                      return
+                    }
+                    setBackgroundType(v as typeof backgroundType)
+                  }}
+                >
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="gradient">Gradient</TabsTrigger>
                     <TabsTrigger value="solid">Solid</TabsTrigger>
-                    <TabsTrigger value="custom">Custom</TabsTrigger>
+                    <TabsTrigger value="custom" className="relative">
+                      Custom
+                      {!canUseCustomBackground && <Lock className="h-3 w-3 ml-1 text-muted-foreground" />}
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="gradient" className="mt-4">
@@ -299,50 +313,65 @@ export default function ManualStudioPage() {
                   </TabsContent>
 
                   <TabsContent value="custom" className="mt-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Color 1</Label>
-                        <div className="flex gap-2">
-                          <input
-                            type="color"
-                            value={customGradient.color1}
-                            onChange={(e) => setCustomGradient({ ...customGradient, color1: e.target.value })}
-                            className="h-10 w-10 cursor-pointer rounded"
-                          />
-                          <Input
-                            value={customGradient.color1}
-                            onChange={(e) => setCustomGradient({ ...customGradient, color1: e.target.value })}
-                            className="flex-1"
+                    {canUseCustomBackground ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>Color 1</Label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={customGradient.color1}
+                                onChange={(e) => setCustomGradient({ ...customGradient, color1: e.target.value })}
+                                className="h-10 w-10 cursor-pointer rounded"
+                              />
+                              <Input
+                                value={customGradient.color1}
+                                onChange={(e) => setCustomGradient({ ...customGradient, color1: e.target.value })}
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Color 2</Label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={customGradient.color2}
+                                onChange={(e) => setCustomGradient({ ...customGradient, color2: e.target.value })}
+                                className="h-10 w-10 cursor-pointer rounded"
+                              />
+                              <Input
+                                value={customGradient.color2}
+                                onChange={(e) => setCustomGradient({ ...customGradient, color2: e.target.value })}
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Angle: {customGradient.angle}°</Label>
+                          <Slider
+                            value={[customGradient.angle]}
+                            onValueChange={([v]) => setCustomGradient({ ...customGradient, angle: v })}
+                            min={0}
+                            max={360}
+                            step={15}
                           />
                         </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Upgrade to Premium or Pro to create custom gradients
+                        </p>
+                        <Button size="sm" onClick={() => (window.location.href = "/credits")}>
+                          <Crown className="h-4 w-4 mr-1" />
+                          Upgrade Now
+                        </Button>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Color 2</Label>
-                        <div className="flex gap-2">
-                          <input
-                            type="color"
-                            value={customGradient.color2}
-                            onChange={(e) => setCustomGradient({ ...customGradient, color2: e.target.value })}
-                            className="h-10 w-10 cursor-pointer rounded"
-                          />
-                          <Input
-                            value={customGradient.color2}
-                            onChange={(e) => setCustomGradient({ ...customGradient, color2: e.target.value })}
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Angle: {customGradient.angle}°</Label>
-                      <Slider
-                        value={[customGradient.angle]}
-                        onValueChange={([v]) => setCustomGradient({ ...customGradient, angle: v })}
-                        min={0}
-                        max={360}
-                        step={15}
-                      />
-                    </div>
+                    )}
                   </TabsContent>
                 </Tabs>
 
@@ -495,7 +524,7 @@ export default function ManualStudioPage() {
                 <CardTitle className="flex items-center gap-2 text-base">
                   <ImageIcon className="h-4 w-4" />
                   Background Image
-                  {!isPro && (
+                  {!canUseImages && (
                     <Badge variant="secondary" className="ml-auto text-xs">
                       Pro
                     </Badge>
@@ -503,7 +532,20 @@ export default function ManualStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ImageUpload onImageSelect={setBackgroundImage} currentImage={backgroundImage} />
+                {canUseImages ? (
+                  <ImageUpload value={backgroundImage} onChange={setBackgroundImage} isPro={true} />
+                ) : (
+                  <div className="text-center py-6 rounded-lg border border-dashed">
+                    <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Background images and AI generation require a Pro subscription
+                    </p>
+                    <Button size="sm" onClick={() => (window.location.href = "/credits")}>
+                      <Crown className="h-4 w-4 mr-1" />
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

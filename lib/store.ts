@@ -7,7 +7,7 @@ export interface User {
   email: string
   avatar?: string
   credits: number
-  plan: "free" | "pro" | "enterprise"
+  plan: "free" | "premium" | "pro"
 }
 
 export interface GeneratedPost {
@@ -18,7 +18,6 @@ export interface GeneratedPost {
   platform: string
   createdAt: Date
   thumbnail?: string
-  // Store all styling data for re-rendering
   author?: string
   gradient?: string
   backgroundColor?: string
@@ -44,7 +43,8 @@ interface AppState {
   consumeCredit: () => boolean
   addCredits: (amount: number) => void
   addPost: (post: GeneratedPost) => void
-  deletePost: (id: string) => void // Added deletePost
+  deletePost: (id: string) => void
+  updatePlan: (plan: "free" | "premium" | "pro", credits?: number) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -90,6 +90,18 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           posts: state.posts.filter((post) => post.id !== id),
         })),
+
+      updatePlan: (plan, credits) => {
+        const { user } = get()
+        if (!user) return
+        set({
+          user: {
+            ...user,
+            plan,
+            credits: credits !== undefined ? user.credits + credits : user.credits,
+          },
+        })
+      },
     }),
     {
       name: "genpost-storage",

@@ -10,41 +10,48 @@ const plans = [
     name: "Free",
     price: "$0",
     description: "Perfect for trying out GenPost",
-    features: ["5 AI generations", "Basic templates", "Standard export quality", "Watermark on exports"],
+    features: [
+      "5 AI generations",
+      "Basic templates",
+      "Standard export quality",
+      "No watermark",
+      "Preset backgrounds only",
+    ],
     cta: "Get Started",
     popular: false,
   },
   {
-    name: "Pro",
-    price: "$12",
+    name: "Premium",
+    price: "$4.99",
     period: "/month",
-    description: "For creators and small teams",
+    description: "For creators who need more",
     features: [
-      "100 AI generations/month",
+      "60 AI generations/month",
       "All premium templates",
       "High-quality exports",
       "No watermark",
+      "Custom backgrounds",
       "Priority support",
-      "Custom fonts",
     ],
-    cta: "Start Pro Trial",
+    cta: "Start Premium",
     popular: true,
   },
   {
-    name: "Enterprise",
-    price: "$49",
+    name: "Pro",
+    price: "$9.99",
     period: "/month",
-    description: "For agencies and large teams",
+    description: "Full creative power",
     features: [
-      "Unlimited AI generations",
+      "150 AI generations/month",
       "All templates + exclusive",
       "4K export quality",
-      "API access",
-      "Team collaboration",
-      "Custom branding",
-      "Dedicated support",
+      "No watermark",
+      "Custom backgrounds",
+      "AI image generation",
+      "Background image upload",
+      "Priority support",
     ],
-    cta: "Contact Sales",
+    cta: "Start Pro",
     popular: false,
   },
 ]
@@ -94,22 +101,25 @@ export function PricingSection() {
           ))}
         </div>
 
-        {/* Credit packs */}
         <div className="mx-auto mt-16 max-w-2xl rounded-2xl border border-border bg-card p-8 text-center">
           <h3 className="text-xl font-semibold">Need more credits?</h3>
           <p className="mt-2 text-muted-foreground">Buy credit packs anytime without a subscription</p>
           <div className="mt-6 flex flex-wrap justify-center gap-4">
             <div className="rounded-lg border border-border px-4 py-3">
               <p className="font-semibold">10 credits</p>
-              <p className="text-sm text-muted-foreground">$5</p>
+              <p className="text-sm text-muted-foreground">$2</p>
             </div>
             <div className="rounded-lg border border-border px-4 py-3">
+              <p className="font-semibold">20 credits</p>
+              <p className="text-sm text-muted-foreground">$3.99</p>
+            </div>
+            <div className="rounded-lg border border-primary bg-primary/5 px-4 py-3">
               <p className="font-semibold">50 credits</p>
-              <p className="text-sm text-muted-foreground">$20</p>
+              <p className="text-sm text-muted-foreground">$5.99</p>
             </div>
             <div className="rounded-lg border border-primary bg-primary/5 px-4 py-3">
               <p className="font-semibold">100 credits</p>
-              <p className="text-sm text-muted-foreground">$35</p>
+              <p className="text-sm text-muted-foreground">$12</p>
             </div>
           </div>
         </div>

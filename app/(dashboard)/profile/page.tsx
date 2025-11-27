@@ -80,7 +80,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
 
                   {/* Plan Badge */}
-                  <Badge className={`mt-3 ${getPlanColor(user?.plan || "free")} border-0 px-3 py-1 text-white`}>
+                  <Badge className={`mt-3 ${getPlanColor(user?.plan || "free")} border-0 px-3 py-1 text-primary`}>
                     {user?.plan === "free" ? (
                       "Free Plan"
                     ) : (

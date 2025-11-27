@@ -1,20 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useAppStore } from "@/lib/store"
-import { toast } from "sonner"
-import { Coins, Check, Zap, Building2, Sparkles, TrendingUp, Calendar } from "lucide-react"
+import { Coins, Check, Zap, Sparkles, TrendingUp, Calendar, Crown } from "lucide-react"
 
 const creditPacks = [
-  { id: "pack-10", credits: 10, price: 5, pricePerCredit: 0.5 },
-  { id: "pack-50", credits: 50, price: 20, pricePerCredit: 0.4, popular: true },
-  { id: "pack-100", credits: 100, price: 35, pricePerCredit: 0.35, bestValue: true },
-  { id: "pack-250", credits: 250, price: 75, pricePerCredit: 0.3 },
+  { id: "pack-10", credits: 10, price: 2, pricePerCredit: 0.2000 },
+  { id: "pack-20", credits: 20, price: 3.99, pricePerCredit: 0.1995, popular: true },
+  { id: "pack-50", credits: 50, price: 5.99, pricePerCredit: 0.1198, bestValue: true },
+  { id: "pack-100", credits: 100, price: 12, pricePerCredit: 0.1200 },
 ]
 
 const subscriptionPlans = [
@@ -25,63 +25,67 @@ const subscriptionPlans = [
     credits: 5,
     period: "one-time",
     icon: Sparkles,
-    features: ["5 AI generations", "Basic templates", "Standard export quality", "Watermark on exports"],
+    features: [
+      "5 AI generations",
+      "Basic templates",
+      "Standard export quality",
+      "No watermark",
+      "Preset backgrounds only",
+    ],
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: 12,
-    credits: 100,
+    id: "premium",
+    name: "Premium",
+    price: 4.99,
+    credits: 60,
     period: "month",
     icon: Zap,
     popular: true,
     features: [
-      "100 AI generations/month",
+      "60 AI generations/month",
       "All premium templates",
       "High-quality exports",
       "No watermark",
+      "Custom backgrounds",
       "Priority support",
-      "Custom fonts",
     ],
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 49,
-    credits: -1, // unlimited
+    id: "pro",
+    name: "Pro",
+    price: 9.99,
+    credits: 150,
     period: "month",
-    icon: Building2,
+    icon: Crown,
     features: [
-      "Unlimited AI generations",
+      "150 AI generations/month",
       "All templates + exclusive",
       "4K export quality",
-      "API access",
-      "Team collaboration",
-      "Custom branding",
-      "Dedicated support",
+      "No watermark",
+      "Custom backgrounds",
+      "AI image generation",
+      "Background image upload",
+      "Priority support",
     ],
   },
 ]
 
 export default function CreditsPage() {
-  const { user, addCredits } = useAppStore()
+  const router = useRouter()
+  const { user } = useAppStore()
   const [isProcessing, setIsProcessing] = useState<string | null>(null)
 
-  const handleBuyCredits = async (packId: string, credits: number) => {
+  const handleBuyCredits = async (packId: string, credits: number, price: number) => {
     setIsProcessing(packId)
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    addCredits(credits)
-    setIsProcessing(null)
-    toast.success(`Successfully added ${credits} credits!`)
+    // Redirect to payment page with pack info
+    router.push(`/payment?type=credits&pack=${packId}&credits=${credits}&price=${price}`)
   }
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSubscribe = async (planId: string, price: number, planName: string) => {
+    if (planId === "free") return
     setIsProcessing(planId)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    // In production, this would redirect to Stripe checkout
-    setIsProcessing(null)
-    toast.success("Subscription feature coming soon!")
+    // Redirect to payment page with subscription info
+    router.push(`/payment?type=subscription&plan=${planId}&price=${price}&name=${planName}`)
   }
 
   const usagePercentage = user ? Math.min(((5 - user.credits) / 5) * 100, 100) : 0
@@ -132,7 +136,7 @@ export default function CreditsPage() {
               >
                 {pack.popular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2">Popular</Badge>}
                 {pack.bestValue && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent">Best Value</Badge>
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-secondary text-primary">Best Value</Badge>
                 )}
                 <CardContent className="p-6 text-center">
                   <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary/10">
@@ -144,7 +148,7 @@ export default function CreditsPage() {
                   <p className="text-xs text-muted-foreground">${pack.pricePerCredit.toFixed(2)} per credit</p>
                   <Button
                     className="mt-6 w-full"
-                    onClick={() => handleBuyCredits(pack.id, pack.credits)}
+                    onClick={() => handleBuyCredits(pack.id, pack.credits, pack.price)}
                     disabled={isProcessing === pack.id}
                   >
                     {isProcessing === pack.id ? "Processing..." : "Buy Now"}
@@ -192,7 +196,7 @@ export default function CreditsPage() {
                     <div className="flex items-center justify-center gap-2 rounded-lg bg-muted p-3">
                       <Coins className="h-5 w-5 text-primary" />
                       <span className="font-medium">
-                        {plan.credits === -1 ? "Unlimited" : plan.credits} credits
+                        {plan.credits} credits
                         {plan.period !== "one-time" && "/month"}
                       </span>
                     </div>
@@ -210,14 +214,14 @@ export default function CreditsPage() {
                       className="w-full"
                       variant={isCurrentPlan ? "outline" : "default"}
                       disabled={isCurrentPlan || isProcessing === plan.id}
-                      onClick={() => handleSubscribe(plan.id)}
+                      onClick={() => handleSubscribe(plan.id, plan.price, plan.name)}
                     >
                       {isCurrentPlan
                         ? "Current Plan"
                         : isProcessing === plan.id
                           ? "Processing..."
                           : plan.id === "free"
-                            ? "Get Started"
+                            ? "Current Plan"
                             : "Subscribe"}
                     </Button>
                   </CardContent>

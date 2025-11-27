@@ -49,7 +49,7 @@ export default function AIStudioPage() {
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
 
-  const isPro = user?.plan === "pro" || user?.plan === "enterprise"
+  const isPro = user?.plan === "pro" || user?.plan === "premium"
 
   const generateContent = async () => {
     if (!topic.trim()) {
