@@ -174,7 +174,7 @@ export default function ProfilePage() {
     <div className="min-h-screen">
       <DashboardHeader title="Profile" description="Manage your account settings" />
 
-      <div className="mx-auto max-w-4xl p-6">
+      <div className="mx-auto max-w-4xl p-4 md:p-6">
         <div className="grid gap-6 md:grid-cols-3">
           {/* Left Column - Profile Card */}
           <div className="md:col-span-1">

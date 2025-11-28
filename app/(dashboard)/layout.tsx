@@ -5,6 +5,7 @@ import type React from "react"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
+import { MobileNav } from "@/components/dashboard/mobile-nav"
 import { useAppStore } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
 
@@ -37,7 +38,8 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="pl-64 transition-all duration-300">{children}</main>
+      <MobileNav />
+      <main className="pl-0 transition-all duration-300 md:pl-64">{children}</main>
     </div>
   )
 }
