@@ -18,7 +18,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAppStore } from "@/lib/store"
 import { templates, platformSizes, styleOptions, toneOptions, type PlatformKey, type Template } from "@/lib/templates"
 import { toast } from "sonner"
-import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon } from "lucide-react"
+import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff } from "lucide-react"
+import { ShareButtons } from "@/components/studio/share-buttons"
 
 export default function AIStudioPage() {
   const { user, setUser, consumeCredit, addPost } = useAppStore()
@@ -50,6 +51,7 @@ export default function AIStudioPage() {
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("templates")
+  const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
 
@@ -211,9 +213,58 @@ export default function AIStudioPage() {
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <DashboardHeader title="AI Generator" description="Let AI create stunning posts for you" />
 
-      <div className="flex flex-1 gap-6 overflow-hidden p-6">
+      <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
+        {/* Mobile Preview Toggle */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPreview(!showPreview)}
+          className="mb-4 w-full gap-2 lg:hidden"
+        >
+          {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPreview ? 'Hide' : 'Show'} Preview
+        </Button>
+
+        {/* Mobile Preview (Sticky Top) */}
+        {showPreview && (
+          <div className="mb-4 lg:hidden">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Preview</CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    {platformSizes[platform].width} x {platformSizes[platform].height}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center p-2">
+                <PreviewCanvas
+                  platform={platform}
+                  content={content}
+                  author={author}
+                  gradient={backgroundType === "gradient" ? gradient : undefined}
+                  backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                  borderColor={borderColor}
+                  borderWidth={borderWidth}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  padding={padding}
+                  backgroundImage={backgroundImage || undefined}
+                  onExport={handleExport}
+                  exportTrigger={exportTrigger}
+                  maxHeight="35vh"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Left Panel - Controls (Scrollable) */}
-        <ScrollArea className="w-full lg:w-96">
+        <ScrollArea className="flex-1 w-full min-h-0 lg:flex-none lg:w-96">
           <div className="space-y-6 pr-4">
             {/* Credits indicator */}
             <Card>
@@ -441,20 +492,30 @@ export default function AIStudioPage() {
               </CardContent>
             </Card>
 
-            {/* Export */}
-            <div className="flex gap-2">
-              <Button onClick={() => setExportTrigger((t) => t + 1)} className="flex-1 gap-2" size="lg">
-                <Download className="h-4 w-4" />
-                Quick Export
-              </Button>
-              <Button onClick={() => setShowExportDialog(true)} variant="outline" size="lg">
-                Options
-              </Button>
-            </div>
+            {/* Export & Share */}
+            <Card>
+              <CardContent className="space-y-4 p-4">
+                <div className="flex gap-2">
+                  <Button onClick={() => setExportTrigger((t) => t + 1)} className="flex-1 gap-2" size="lg">
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                  <Button onClick={() => setShowExportDialog(true)} variant="outline" size="lg">
+                    Options
+                  </Button>
+                </div>
+                <ShareButtons
+                  imageDataUrl=""
+                  content={content}
+                  platform={platform}
+                  onDownload={() => setExportTrigger((t) => t + 1)}
+                />
+              </CardContent>
+            </Card>
           </div>
         </ScrollArea>
 
-        {/* Right Panel - Preview (Sticky) */}
+        {/* Desktop Preview (Right Panel - Always Visible) */}
         <div className="hidden flex-1 lg:block">
           <Card className="sticky top-6 h-full">
             <CardHeader>

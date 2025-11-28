@@ -22,6 +22,7 @@ interface PreviewCanvasProps {
   backgroundImage?: string
   onExport?: (dataUrl: string) => void
   exportTrigger?: number
+  maxHeight?: string
 }
 
 const FONT_URLS: Record<string, string> = {
@@ -230,6 +231,7 @@ export function PreviewCanvas({
   backgroundImage,
   onExport,
   exportTrigger,
+  maxHeight = "70vh",
 }: PreviewCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -422,7 +424,7 @@ export function PreviewCanvas({
         ref={canvasRef}
         style={{
           maxWidth: "100%",
-          maxHeight: "70vh",
+          maxHeight: maxHeight,
           width: aspectRatio > 1 ? "100%" : "auto",
           height: aspectRatio <= 1 ? "100%" : "auto",
           borderRadius: "0.5rem",
