@@ -45,6 +45,7 @@ interface AppState {
   updatePlan: (plan: "free" | "premium" | "pro", credits?: number) => void
   fetchUser: (userId: string) => Promise<void>
   fetchPosts: (userId: string) => Promise<void>
+  logout: () => Promise<void>
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
@@ -266,5 +267,18 @@ export const useAppStore = create<AppState>()((set, get) => ({
         credits: credits !== undefined ? user.credits + credits : user.credits,
       },
     })
+  },
+
+  logout: async () => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error("Error signing out:", error)
+      throw error
+    }
+
+    // Clear user state and posts
+    set({ user: null, isAuthenticated: false, posts: [] })
   },
 }))

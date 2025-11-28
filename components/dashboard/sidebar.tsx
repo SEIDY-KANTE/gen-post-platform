@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/lib/store"
@@ -33,8 +33,18 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, logout } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
+  }
 
   return (
     <aside
@@ -123,7 +133,7 @@ export function Sidebar() {
                 <p className="truncate text-xs text-muted-foreground">{user.email}</p>
               </div>
             )}
-            <Button variant="ghost" size="icon" onClick={() => logout()} className={cn("h-8 w-8", collapsed && "ml-0")}>
+            <Button variant="ghost" size="icon" onClick={handleLogout} className={cn("h-8 w-8", collapsed && "ml-0", "hover:cursor-pointer")}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
