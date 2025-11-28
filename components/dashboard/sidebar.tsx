@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Coins,
+  MessageSquare,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -29,6 +30,7 @@ const navigation = [
   { name: "History", href: "/history", icon: History },
   { name: "Credits", href: "/credits", icon: CreditCard },
   { name: "Profile", href: "/profile", icon: User },
+  { name: "Support", href: "/support", icon: MessageSquare },
 ]
 
 export function Sidebar() {

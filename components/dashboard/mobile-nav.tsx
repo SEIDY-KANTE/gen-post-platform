@@ -15,6 +15,7 @@ import {
     History as HistoryIcon,
     CreditCard,
     User as UserIcon,
+    MessageSquare,
 } from "lucide-react"
 import { useState } from "react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -27,6 +28,7 @@ const navigation = [
     { name: "History", href: "/history", icon: HistoryIcon },
     { name: "Credits", href: "/credits", icon: CreditCard },
     { name: "Profile", href: "/profile", icon: UserIcon },
+    { name: "Support", href: "/support", icon: MessageSquare },
 ]
 
 export function MobileNav() {
