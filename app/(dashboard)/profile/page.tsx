@@ -88,8 +88,8 @@ export default function ProfilePage() {
 
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id} -${Date.now()}.${fileExt} `
-      const filePath = `avatars / ${fileName} `
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -184,7 +184,7 @@ export default function ProfilePage() {
                   {/* Avatar with edit overlay */}
                   <div className="group relative">
                     <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                      <AvatarImage src={user?.avatar || "/placeholder.svg"} />
+                      <AvatarImage src={user?.avatar} />
                       <AvatarFallback className="text-2xl font-semibold">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h - 10 w - 10 items - center justify - center rounded - full ${getPlanColor(user?.plan || "free")} `}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${getPlanColor(user?.plan || "free")}`}
                       >
                         {user?.plan === "free" ? (
                           <Zap className="h-5 w-5 text-foreground" />

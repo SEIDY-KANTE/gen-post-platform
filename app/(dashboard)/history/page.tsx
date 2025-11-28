@@ -96,7 +96,7 @@ export default function HistoryPage() {
     <div className="min-h-screen">
       <DashboardHeader title="History" description="View all your generated posts" />
 
-      <div className="p-6">
+      <div className="p-6 max-w-6xl mx-auto">
         {posts.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
