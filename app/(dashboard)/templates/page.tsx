@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { templates, templateCategories, type Template } from "@/lib/templates"
 import { Search, Wand2, Palette, Lock, Sparkles, Star } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export default function TemplatesPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [favorites, setFavorites] = useState<string[]>([])
+  const { t } = useI18n()
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
@@ -37,7 +39,7 @@ export default function TemplatesPage() {
     })
   }
 
-  const categories = [{ id: "favorites", label: "Favoris" }, ...templateCategories]
+  const categories = [{ id: "favorites", label: t("templates.favorites", "Favoris") }, ...templateCategories]
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -73,11 +75,11 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen">
       <DashboardHeader
-        title="Templates"
-        description="Choisissez un style, appliquez-le directement en mode IA ou manuel."
+        title={t("templates.title", "Templates")}
+        description={t("templates.description", "Choisissez un style, appliquez-le directement en mode IA ou manuel.")}
         action={
           <Button size="sm" className="rounded-full" onClick={() => router.push("/studio/ai")}>
-            Lancer l&apos;IA
+            {t("templates.mode.launchAI", "Lancer l’IA")}
           </Button>
         }
       />
@@ -88,7 +90,7 @@ export default function TemplatesPage() {
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search templates..."
+              placeholder={t("templates.search", "Rechercher des templates...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -103,7 +105,7 @@ export default function TemplatesPage() {
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
               >
-                {category.label}
+                {t(`templates.filter.${category.id}`, category.label)}
               </Button>
             ))}
           </div>
@@ -176,7 +178,7 @@ export default function TemplatesPage() {
                   <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-black/55 px-3 py-2 opacity-90">
                     <Button size="sm" variant="default" className="gap-1 rounded-full" onClick={(e) => { e.stopPropagation(); handleUseTemplate(template, "ai") }}>
                       <Wand2 className="h-4 w-4" />
-                      Mode IA
+                      {t("templates.mode.ai", "Mode IA")}
                     </Button>
                     <Button
                       size="sm"
@@ -185,7 +187,7 @@ export default function TemplatesPage() {
                       onClick={(e) => { e.stopPropagation(); handleUseTemplate(template, "manual") }}
                     >
                       <Palette className="h-4 w-4" />
-                      Manuel
+                      {t("templates.mode.manual", "Manuel")}
                     </Button>
                   </div>
                 </div>
@@ -212,11 +214,11 @@ export default function TemplatesPage() {
                 <Sparkles className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Unlock Premium Templates</h3>
-                <p className="text-muted-foreground">Get access to exclusive designs and unlimited customization</p>
+                <h3 className="text-lg font-semibold">{t("templates.cta.title", "Unlock Premium Templates")}</h3>
+                <p className="text-muted-foreground">{t("templates.cta.subtitle", "Get access to exclusive designs and unlimited customization")}</p>
               </div>
             </div>
-            <Button size="lg">Upgrade to Pro</Button>
+            <Button size="lg">{t("templates.cta.button", "Upgrade to Pro")}</Button>
           </CardContent>
         </Card>
       </div>

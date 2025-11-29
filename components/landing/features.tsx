@@ -1,39 +1,51 @@
-import { Sparkles, Palette, Layout, Send, Wand2, Smartphone, Instagram, Facebook, Linkedin, Twitter } from "lucide-react"
+"use client"
 
-const pillars = [
+import { Sparkles, Palette, Layout, Send, Wand2, Smartphone, Instagram, Facebook, Linkedin, Twitter } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
+
+const pillarsBase = [
   {
     icon: Sparkles,
-    title: "Créer en un prompt",
-    tag: "AI Studio",
-    description: "Brief multilingue, ton et voix respectés. Textes générés et adaptés à chaque réseau.",
-    bullets: ["Suggestions auto de visuels", "Scripts courts pour TikTok/Reels", "Hashtags optimisés par audience"],
+    titleKey: "features.block.create",
+    tagKey: "features.block.create.tag",
+    descriptionKey: "features.subtitle",
+    bullets: ["features.bullet.create.1", "features.bullet.create.2", "features.bullet.create.3"],
   },
   {
     icon: Palette,
-    title: "Personnaliser en 30s",
-    tag: "Visual editor",
-    description: "Glisser-déposer, grilles fluides, palettes et typos mémorisées pour ta marque.",
-    bullets: ["Palettes synchronisées", "Variantes motion prêtes en 1 clic", "Fond AI: gradients, motifs, photos"],
+    titleKey: "features.block.customize",
+    tagKey: "features.block.customize.tag",
+    descriptionKey: "features.subtitle",
+    bullets: ["features.bullet.customize.1", "features.bullet.customize.2", "features.bullet.customize.3"],
   },
   {
     icon: Send,
-    title: "Publier partout",
-    tag: "Resize & export",
-    description: "Exports PNG/MP4, ratio auto, safe zones vérifiées. Handoff parfait pour tes réseaux.",
-    bullets: ["Exports IG, TikTok, LinkedIn, X", "4K et webp léger", "Planification via pack social"],
+    titleKey: "features.block.ship",
+    tagKey: "features.block.ship.tag",
+    descriptionKey: "features.platform.title",
+    bullets: ["features.bullet.ship.1", "features.bullet.ship.2", "features.bullet.ship.3"],
   },
 ]
 
 export function FeaturesSection() {
+  const { t } = useI18n()
+  const pillars = pillarsBase.map((p) => ({
+    ...p,
+    title: t(p.titleKey, p.titleKey),
+    tag: t(p.tagKey, p.tagKey),
+    description: t(p.descriptionKey, p.descriptionKey),
+  }))
   return (
     <section id="features" className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Tout le flux créatif,
-            <span className="block text-gradient">du brief à la mise en ligne.</span>
+            {t("features.title.line1", "Tout le flux créatif,")}
+            <span className="block text-gradient">{t("features.title.line2", "du brief à la mise en ligne.")}</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">Un studio complet: génération, édition, export multi-réseaux.</p>
+          <p className="mt-4 text-lg text-muted-foreground">
+            {t("features.subtitle", "Un studio complet: génération, édition, export multi-réseaux.")}
+          </p>
         </div>
 
         <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -59,7 +71,7 @@ export function FeaturesSection() {
                 {pillar.bullets.map((bullet) => (
                   <div key={bullet} className="flex items-start gap-2 text-sm text-foreground">
                     <span className="mt-1 h-2 w-2 rounded-full bg-primary/80" />
-                    <span className="text-muted-foreground">{bullet}</span>
+                    <span className="text-muted-foreground">{t(bullet)}</span>
                   </div>
                 ))}
               </div>
@@ -69,8 +81,8 @@ export function FeaturesSection() {
 
         <div className="mt-16 grid items-center gap-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-6 sm:grid-cols-[1.2fr,1fr] sm:px-8">
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-primary">Optimisé par plateforme</p>
-            <h3 className="text-2xl font-semibold">Safe zones, ratios et textes adaptés automatiquement.</h3>
+            <p className="text-sm font-semibold text-primary">{t("features.block.ship.tag", "Resize & export")}</p>
+            <h3 className="text-2xl font-semibold">{t("features.platform.title", "Safe zones, ratios and text auto-adapted.")}</h3>
             <p className="text-sm text-muted-foreground">
               Un clic pour décliner votre visuel pour IG, TikTok, LinkedIn et X. On ajuste la typographie, le recadrage et la durée motion pour rester lisible.
             </p>

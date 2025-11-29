@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { Moon, Sun, Sparkles, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/hooks/useAuth"
+import { useI18n } from "@/lib/i18n"
+import { LocaleSwitcher } from "@/components/locale-switcher"
 
 export function LandingHeader() {
   const { theme, setTheme } = useTheme()
   const { user, loading } = useAuth()
   const router = useRouter()
+  const { t } = useI18n()
 
   // Redirect logged-in users to dashboard
   // useEffect(() => {
@@ -25,7 +28,7 @@ export function LandingHeader() {
       <div className="hidden items-center justify-center border-b border-border/40 bg-gradient-to-r from-primary/10 via-transparent to-accent/15 px-4 py-2 text-xs font-medium text-muted-foreground sm:flex">
         <div className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-foreground/90 backdrop-blur">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          Nouvelles templates motion prêtes pour Instagram et TikTok
+          {t("trust.annonce", "Nouvelles templates motion prêtes pour Instagram et TikTok")}
           <ArrowRight className="h-3.5 w-3.5" />
         </div>
       </div>
@@ -39,9 +42,9 @@ export function LandingHeader() {
 
         <nav className="hidden items-center gap-2 md:flex">
           {[
-            { href: "#features", label: "Fonctionnalités" },
-            { href: "#templates", label: "Templates" },
-            { href: "#pricing", label: "Tarifs" },
+            { href: "#features", label: t("nav.features", "Fonctionnalités") },
+            { href: "#templates", label: t("nav.templates", "Templates") },
+            { href: "#pricing", label: t("nav.pricing", "Tarifs") },
           ].map((item) => (
             <Link
               key={item.href}
@@ -54,6 +57,7 @@ export function LandingHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LocaleSwitcher condensed />
           <div className="hidden items-center gap-1 rounded-full border border-border px-1 py-1 text-xs font-medium md:flex">
             <Button
               variant="ghost"
@@ -80,12 +84,12 @@ export function LandingHeader() {
                 <>
                   <Link href="/login">
                     <Button variant="ghost" size="sm" className="rounded-full">
-                      Connexion
+                      {t("nav.signin", "Connexion")}
                     </Button>
                   </Link>
                   <Link href="/login">
                     <Button size="sm" className="rounded-full">
-                      Commencer
+                      {t("nav.getStarted", "Commencer")}
                     </Button>
                   </Link>
                 </>

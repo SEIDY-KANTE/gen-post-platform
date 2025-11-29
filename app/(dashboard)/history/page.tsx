@@ -33,6 +33,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useI18n } from "@/lib/i18n"
 
 export default function HistoryPage() {
   const { user } = useAuth()
@@ -43,6 +44,7 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [platformFilter, setPlatformFilter] = useState<"all" | PlatformKey>("all")
+  const { t } = useI18n()
 
   // Fetch posts on mount
   useEffect(() => {
@@ -125,18 +127,18 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen">
       <DashboardHeader
-        title="Historique"
-        description="Retrouvez, filtrez et ré-exportez vos créations."
+        title={t("history.headerTitle", "History")}
+        description={t("history.headerDesc", "Find, filter and re-export your creations.")}
         action={
           <div className="hidden gap-2 sm:flex">
             <Link href="/studio/ai">
               <Button size="sm" className="rounded-full">
-                Générer avec l&apos;IA
+                {t("templates.mode.launchAI", "Launch AI")}
               </Button>
             </Link>
             <Link href="/templates">
               <Button variant="outline" size="sm" className="rounded-full">
-                Ouvrir les templates
+                {t("templates.title", "Templates")}
               </Button>
             </Link>
           </div>
@@ -170,7 +172,7 @@ export default function HistoryPage() {
               <div className="relative w-full sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par titre, contenu ou template..."
+                  placeholder={t("history.search", "Search by title, content or template...")}
                   className="pl-9"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -183,7 +185,7 @@ export default function HistoryPage() {
                     <SelectValue placeholder="Plateforme" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les plateformes</SelectItem>
+                    <SelectItem value="all">{t("history.filter.all", "All platforms")}</SelectItem>
                     <SelectItem value="instagram-square">Instagram</SelectItem>
                     <SelectItem value="instagram-story">Story</SelectItem>
                     <SelectItem value="tiktok">TikTok</SelectItem>
@@ -199,10 +201,10 @@ export default function HistoryPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center gap-2 py-12 text-center">
                   <Sparkles className="h-8 w-8 text-primary" />
-                  <p className="font-semibold">Aucun post ne correspond</p>
-                  <p className="text-sm text-muted-foreground">Essayez un autre filtre ou créez un nouveau visuel.</p>
+                  <p className="font-semibold">{t("history.noResults.title", "No matching posts")}</p>
+                  <p className="text-sm text-muted-foreground">{t("history.noResults.subtitle", "Try another filter or create a new visual.")}</p>
                   <Link href="/studio/ai">
-                    <Button className="rounded-full mt-2">Nouveau post</Button>
+                    <Button className="rounded-full mt-2">{t("templates.mode.launchAI", "Launch AI")}</Button>
                   </Link>
                 </CardContent>
               </Card>

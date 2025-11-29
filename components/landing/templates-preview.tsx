@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, PlayCircle } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 const templates = [
   {
@@ -53,18 +54,19 @@ const templates = [
 ]
 
 export function TemplatesPreview() {
+  const { t } = useI18n()
   return (
     <section id="templates" className="bg-muted/30 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Beautiful templates for every need</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("templatesPreview.title", "Beautiful templates for every need")}</h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Start with a template or create from scratch. Each one is fully customizable.
+            {t("templatesPreview.subtitle", "Start with a template or create from scratch. Each one is fully customizable.")}
           </p>
         </div>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-sm">
-          {["Tous", "Quotes", "Marketing", "Education", "Minimal", "Motion"].map((filter) => (
+          {[t("templatesPreview.filters.all", "Tous"), t("templatesPreview.filters.quotes", "Quotes"), t("templatesPreview.filters.marketing", "Marketing"), t("templatesPreview.filters.education", "Education"), t("templatesPreview.filters.minimal", "Minimal"), t("templatesPreview.filters.motion", "Motion")].map((filter) => (
             <button
               key={filter}
               className="rounded-full border border-border/60 bg-card/70 px-4 py-2 text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
@@ -107,11 +109,11 @@ export function TemplatesPreview() {
         <div className="mt-12 flex flex-col items-center gap-4 text-center">
           <Link href="/templates">
             <Button variant="outline" size="lg" className="gap-2 bg-transparent">
-              Voir toute la bibliothèque
+              {t("templatesPreview.cta", "See full library")}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
-          <p className="text-sm text-muted-foreground">Nouvelles séries motion chaque semaine.</p>
+          <p className="text-sm text-muted-foreground">{t("templatesPreview.note", "New motion series every week.")}</p>
         </div>
       </div>
     </section>

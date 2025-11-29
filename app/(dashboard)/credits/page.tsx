@@ -9,10 +9,12 @@ import { useAppStore } from "@/lib/store"
 import { STRIPE_PRODUCTS, formatPrice } from "@/lib/stripe/client-config"
 import { Loader2, Check, Zap, Crown, Sparkles } from "lucide-react"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 export default function CreditsPage() {
   const { user } = useAppStore()
   const [loading, setLoading] = useState<string | null>(null)
+  const { t } = useI18n()
 
   const handlePurchase = async (productId: string) => {
     setLoading(productId)
@@ -143,8 +145,8 @@ export default function CreditsPage() {
   return (
     <div className="min-h-screen">
       <DashboardHeader
-        title="Credits & Plans"
-        description="Purchase credits or upgrade to a subscription plan"
+        title={t("credits.title", "Credits & Plans")}
+        description={t("credits.desc", "Purchase credits or upgrade to a subscription plan")}
       />
 
       <div className="p-4 space-y-8 max-w-6xl mx-auto md:p-6">
@@ -152,9 +154,9 @@ export default function CreditsPage() {
         <Card className="overflow-hidden border-border/70 bg-card/80 shadow-sm">
           <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold">Vos crédits</h3>
+              <h3 className="text-lg font-semibold">{t("credits.current", "Your credits")}</h3>
               <p className="text-sm text-muted-foreground">
-                {user?.credits || 0} restants • Plan {user?.plan || "free"}
+                {user?.credits || 0} {t("credits.remaining", "remaining • Plan")} {user?.plan || "free"}
               </p>
               <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-border">
                 <div
@@ -174,10 +176,10 @@ export default function CreditsPage() {
               </div>
               <div className="hidden sm:flex flex-col gap-2">
                 <Button size="sm" className="rounded-full" onClick={() => handlePurchase("credits_20")}>
-                  Acheter des crédits
+                  {t("credits.cta.buy", "Buy credits")}
                 </Button>
                 <Button size="sm" variant="ghost" className="rounded-full" onClick={() => handlePurchase("pro")}>
-                  Passer en Pro
+                  {t("credits.cta.upgrade", "Upgrade to Pro")}
                 </Button>
               </div>
             </div>

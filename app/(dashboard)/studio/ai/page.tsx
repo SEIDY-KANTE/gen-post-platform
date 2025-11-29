@@ -20,6 +20,7 @@ import { templates, platformSizes, styleOptions, toneOptions, type PlatformKey, 
 import { toast } from "sonner"
 import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff, Search, Star } from "lucide-react"
 import { ShareButtons } from "@/components/studio/share-buttons"
+import { useI18n } from "@/lib/i18n"
 
 export default function AIStudioPage() {
   const { user, setUser, consumeCredit, addPost } = useAppStore()
@@ -53,6 +54,7 @@ export default function AIStudioPage() {
   const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
   const [templateSearch, setTemplateSearch] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
+  const { t } = useI18n()
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
 
@@ -255,7 +257,7 @@ export default function AIStudioPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <DashboardHeader title="AI Generator" description="Let AI create stunning posts for you" />
+      <DashboardHeader title={t("studio.ai.headerTitle", "AI Generator")} description={t("studio.ai.headerDesc", "Brief in one line and get social-ready canvases.")} />
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
         {/* Mobile Preview Toggle */}
@@ -266,7 +268,7 @@ export default function AIStudioPage() {
           className="mb-4 w-full gap-2 lg:hidden"
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showPreview ? 'Hide' : 'Show'} Preview
+          {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
         </Button>
 
         {/* Mobile Preview (Sticky Top) */}
@@ -313,7 +315,7 @@ export default function AIStudioPage() {
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-2">
                   <Coins className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Credits</span>
+                  <span className="font-medium">{t("studio.ai.credit", "Credits")}</span>
                 </div>
                 <Badge variant="secondary" className="text-lg">
                   {user?.credits || 0}
@@ -331,10 +333,10 @@ export default function AIStudioPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="topic">Topic / Idea</Label>
+                  <Label htmlFor="topic">{t("studio.ai.topic", "Topic / Idea")}</Label>
                   <Textarea
                     id="topic"
-                    placeholder="e.g., Success requires persistence and dedication..."
+                    placeholder={t("studio.ai.topic.placeholder", "e.g., Success requires persistence and dedication...")}
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     rows={3}
@@ -343,7 +345,7 @@ export default function AIStudioPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Style</Label>
+                    <Label>{t("studio.ai.style", "Style")}</Label>
                     <Select value={style} onValueChange={setStyle}>
                       <SelectTrigger>
                         <SelectValue />
@@ -359,7 +361,7 @@ export default function AIStudioPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Tone</Label>
+                    <Label>{t("studio.ai.tone", "Tone")}</Label>
                     <Select value={tone} onValueChange={setTone}>
                       <SelectTrigger>
                         <SelectValue />
@@ -376,7 +378,7 @@ export default function AIStudioPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Platform</Label>
+                  <Label>{t("studio.ai.platform", "Platform")}</Label>
                   <Select value={platform} onValueChange={(v) => setPlatform(v as PlatformKey)}>
                     <SelectTrigger>
                       <SelectValue />
@@ -392,7 +394,7 @@ export default function AIStudioPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="author">Author (optional)</Label>
+                  <Label htmlFor="author">{t("studio.ai.author", "Author (optional)")}</Label>
                   <Input
                     id="author"
                     placeholder="Your name or brand"
@@ -405,12 +407,12 @@ export default function AIStudioPage() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
+                      {t("studio.ai.generating", "Generating...")}
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-4 w-4" />
-                      Generate with AI
+                      {t("studio.ai.generate", "Generate with AI")}
                     </>
                   )}
                 </Button>
@@ -427,8 +429,8 @@ export default function AIStudioPage() {
               </CardHeader>
               <CardContent>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <Badge variant="secondary" className="rounded-full text-xs">
-                    Template actif: {selectedTemplate.name}
+                    <Badge variant="secondary" className="rounded-full text-xs">
+                    {t("studio.ai.activeTemplate", "Template actif")}: {selectedTemplate.name}
                   </Badge>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Favoris: {favorites.length}</span>
@@ -436,12 +438,12 @@ export default function AIStudioPage() {
                 </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="templates">Templates</TabsTrigger>
-                    <TabsTrigger value="text">Text</TabsTrigger>
-                    <TabsTrigger value="style">Style</TabsTrigger>
+                    <TabsTrigger value="templates">{t("studio.ai.templates", "Templates")}</TabsTrigger>
+                    <TabsTrigger value="text">{t("studio.ai.text", "Text")}</TabsTrigger>
+                    <TabsTrigger value="style">{t("studio.ai.styleTab", "Style")}</TabsTrigger>
                     <TabsTrigger value="image" className="gap-1">
                       <ImageIcon className="h-3 w-3" />
-                      Image
+                      {t("studio.ai.image", "Image")}
                     </TabsTrigger>
                   </TabsList>
 
@@ -449,7 +451,7 @@ export default function AIStudioPage() {
                     <div className="mb-3 flex items-center gap-2">
                       <Search className="h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Rechercher un template..."
+                        placeholder={t("studio.ai.templateSearch", "Rechercher un template...")}
                         value={templateSearch}
                         onChange={(e) => setTemplateSearch(e.target.value)}
                         className="h-9"
@@ -490,22 +492,22 @@ export default function AIStudioPage() {
 
                   <TabsContent value="text" className="mt-4 space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="content-edit">Post Content</Label>
+                      <Label htmlFor="content-edit">{t("studio.ai.postContent", "Post Content")}</Label>
                       <Textarea
                         id="content-edit"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         rows={6}
-                        placeholder="Generated content will appear here..."
+                        placeholder={t("studio.ai.contentPlaceholder", "Generated content will appear here...")}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="author-edit">Author / Brand</Label>
+                      <Label htmlFor="author-edit">{t("studio.ai.authorBrand", "Author / Brand")}</Label>
                       <Input
                         id="author-edit"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={t("studio.ai.authorPlaceholder", "Your name")}
                       />
                     </div>
                   </TabsContent>
@@ -588,7 +590,7 @@ export default function AIStudioPage() {
           <Card className="sticky top-6 h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Preview</CardTitle>
+                <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
                 <Badge variant="outline">
                   {platformSizes[platform].width} x {platformSizes[platform].height}
                 </Badge>

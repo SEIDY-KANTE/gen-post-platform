@@ -4,6 +4,7 @@ import { Sora, Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner"
+import { I18nProvider } from "@/lib/i18n"
 import "./globals.css"
 
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora" })
@@ -47,11 +48,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.variable} ${manrope.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster position="top-center" richColors />
-        </ThemeProvider>
-        <Analytics />
+        <I18nProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            {children}
+            <Toaster position="top-center" richColors />
+          </ThemeProvider>
+          <Analytics />
+        </I18nProvider>
       </body>
     </html>
   )
