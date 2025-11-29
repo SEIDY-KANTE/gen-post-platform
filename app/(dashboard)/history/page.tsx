@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { ShareButtons } from "@/components/studio/share-buttons"
@@ -28,9 +28,12 @@ import {
 import { useAppStore, type GeneratedPost } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { templates, type PlatformKey } from "@/lib/templates"
-import { Sparkles, Download, Trash2, Eye, Calendar, Layout, Loader2 } from "lucide-react"
+import { Sparkles, Download, Trash2, Eye, Calendar, Layout, Loader2, Search, Filter } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useI18n } from "@/lib/i18n"
 
 export default function HistoryPage() {
   const { user } = useAuth()
@@ -39,6 +42,9 @@ export default function HistoryPage() {
   const [deletingPost, setDeletingPost] = useState<GeneratedPost | null>(null)
   const [exportTrigger, setExportTrigger] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [platformFilter, setPlatformFilter] = useState<"all" | PlatformKey>("all")
+  const { t } = useI18n()
 
   // Fetch posts on mount
   useEffect(() => {
@@ -104,9 +110,40 @@ export default function HistoryPage() {
     return template.gradient || template.backgroundColor || "#667eea"
   }
 
+  const filteredPosts = useMemo(() => {
+    return posts
+      .filter((post) => {
+        const matchesPlatform = platformFilter === "all" || post.platform === platformFilter
+        const query = searchQuery.toLowerCase()
+        const matchesSearch =
+          post.title?.toLowerCase().includes(query) ||
+          post.content?.toLowerCase().includes(query) ||
+          getTemplateForPost(post).name.toLowerCase().includes(query)
+        return matchesPlatform && (!query || matchesSearch)
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [posts, platformFilter, searchQuery])
+
   return (
     <div className="min-h-screen">
-      <DashboardHeader title="History" description="View all your generated posts" />
+      <DashboardHeader
+        title={t("history.headerTitle", "History")}
+        description={t("history.headerDesc", "Find, filter and re-export your creations.")}
+        action={
+          <div className="hidden gap-2 sm:flex">
+            <Link href="/studio/ai">
+              <Button size="sm" className="rounded-full">
+                {t("templates.mode.launchAI", "Launch AI")}
+              </Button>
+            </Link>
+            <Link href="/templates">
+              <Button variant="outline" size="sm" className="rounded-full">
+                {t("templates.title", "Templates")}
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       <div className="p-4 max-w-6xl mx-auto md:p-6">
         {isLoading ? (
@@ -130,9 +167,51 @@ export default function HistoryPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {posts.map((post) => (
-              <Card key={post.id} className="group overflow-hidden transition-all hover:shadow-lg">
+          <>
+            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={t("history.search", "Search by title, content or template...")}
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={platformFilter} onValueChange={(v) => setPlatformFilter(v as PlatformKey | "all")}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue placeholder="Plateforme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("history.filter.all", "All platforms")}</SelectItem>
+                    <SelectItem value="instagram-square">Instagram</SelectItem>
+                    <SelectItem value="instagram-story">Story</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="twitter">X / Twitter</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {filteredPosts.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                  <p className="font-semibold">{t("history.noResults.title", "No matching posts")}</p>
+                  <p className="text-sm text-muted-foreground">{t("history.noResults.subtitle", "Try another filter or create a new visual.")}</p>
+                  <Link href="/studio/ai">
+                    <Button className="rounded-full mt-2">{t("templates.mode.launchAI", "Launch AI")}</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredPosts.map((post) => (
+                  <Card key={post.id} className="group overflow-hidden rounded-2xl border-border/70 bg-card/80 transition-all hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg">
                 {/* Thumbnail preview */}
                 <div
                   className="relative aspect-square"
@@ -156,15 +235,16 @@ export default function HistoryPage() {
                   <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button size="sm" variant="secondary" onClick={() => setViewingPost(post)}>
                       <Eye className="mr-1 h-3 w-3" />
-                      View
+                      {t("history.action.view", "View")}
                     </Button>
                   </div>
-                </div>
+                  </div>
 
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-medium">{post.title || "Untitled Post"}</h3>
+                      <h3 className="truncate font-medium">{post.title || t("history.empty.title", "Untitled Post")}</h3>
+                      {/* Date is shown locale-neutral for now; could format with Intl.DateTimeFormat per locale */}
                       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         {new Date(post.createdAt).toLocaleDateString()}
@@ -184,7 +264,7 @@ export default function HistoryPage() {
                       onClick={() => setViewingPost(post)}
                     >
                       <Eye className="h-3 w-3" />
-                      View
+                      {t("history.action.view", "View")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -197,8 +277,10 @@ export default function HistoryPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -214,7 +296,7 @@ export default function HistoryPage() {
       >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{viewingPost?.title || "View Post"}</DialogTitle>
+            <DialogTitle>{viewingPost?.title || t("history.action.view", "View")}</DialogTitle>
             <DialogDescription>
               Created on {viewingPost && new Date(viewingPost.createdAt).toLocaleString()}
             </DialogDescription>
@@ -258,11 +340,11 @@ export default function HistoryPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingPost(null)}>
-              Close
+              {t("history.action.close", "Close")}
             </Button>
             <Button onClick={handleExportClick} className="gap-2">
               <Download className="h-4 w-4" />
-              Export PNG
+              {t("history.action.export", "Export PNG")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -60,15 +60,27 @@ export function ImageUpload({ onImageSelect, currentImage, isPro = false }: Imag
 
     setIsGenerating(true)
 
-    // Mock AI image generation - in production, call your AI image API
-    await new Promise((resolve) => setTimeout(resolve, 2500))
+    try {
+      const response = await fetch("/api/ai-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      })
 
-    // Using placeholder with query for demo
-    const generatedImageUrl = `/placeholder.svg?height=1080&width=1080&query=${encodeURIComponent(aiPrompt)}`
-    onImageSelect(generatedImageUrl)
-    setIsOpen(false)
-    setIsGenerating(false)
-    toast.success("AI image generated successfully!")
+      if (!response.ok) {
+        throw new Error("Unable to generate image right now.")
+      }
+
+      const data = (await response.json()) as { url: string; source?: string }
+      onImageSelect(data.url)
+      setIsOpen(false)
+      toast.success(data.source ? `AI image generated via ${data.source}` : "AI image generated successfully!")
+    } catch (error) {
+      console.error(error)
+      toast.error("Image generation failed. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleRemoveImage = () => {

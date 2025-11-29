@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { ImageUpload } from "@/components/studio/image-upload"
@@ -33,9 +33,12 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Search,
+  Star,
 } from "lucide-react"
 import { ExportDialog } from "@/components/studio/export-dialog"
 import { ShareButtons } from "@/components/studio/share-buttons"
+import { useI18n } from "@/lib/i18n"
 
 export default function ManualStudioPage() {
   const { addPost, user } = useAppStore()
@@ -71,6 +74,10 @@ export default function ManualStudioPage() {
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [appliedTemplateName, setAppliedTemplateName] = useState("Custom")
+  const { t } = useI18n()
 
   const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
   const canUseImages = user?.plan === "pro"
@@ -153,6 +160,7 @@ export default function ManualStudioPage() {
     setBorderWidth(0)
     setAccentColor("")
     setBackgroundImage(null)
+    setAppliedTemplateName("Custom")
     toast.info("Editor reset to defaults")
   }
 
@@ -180,6 +188,7 @@ export default function ManualStudioPage() {
     setBorderWidth(template.borderWidth || 0)
     setAccentColor(template.accentColor || "")
     setBackgroundImage(null)
+    setAppliedTemplateName(template.name)
     toast.success(`Applied "${template.name}" template`)
   }
 
@@ -200,9 +209,48 @@ export default function ManualStudioPage() {
         : undefined
   const canvasBackgroundColor = backgroundType === "solid" ? solidColor : undefined
 
+  useEffect(() => {
+    const stored = sessionStorage.getItem("selectedTemplate")
+    if (stored) {
+      try {
+        const template: Template = JSON.parse(stored)
+        applyTemplate(template)
+      } catch (e) {
+        console.error("Failed to apply stored template", e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored))
+      } catch {
+        setFavorites([])
+      }
+    }
+  }, [])
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favoriteTemplates", JSON.stringify(next))
+      }
+      return next
+    })
+  }
+
+  const filteredTemplates = templates.filter((template) => {
+    if (!templateSearch.trim()) return true
+    const q = templateSearch.toLowerCase()
+    return template.name.toLowerCase().includes(q) || template.category.toLowerCase().includes(q)
+  })
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <DashboardHeader title="Manual Editor" description="Create your post with full control" />
+      <DashboardHeader title={t("studio.manual.headerTitle", "Manual Editor")} description={t("studio.manual.headerDesc", "Create your post with full control")} />
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
         {/* Mobile Preview Toggle */}
@@ -213,7 +261,7 @@ export default function ManualStudioPage() {
           className="mb-4 w-full gap-2 lg:hidden"
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showPreview ? 'Hide' : 'Show'} Preview
+          {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
         </Button>
 
         {/* Mobile Preview (Sticky Top) */}
@@ -222,7 +270,7 @@ export default function ManualStudioPage() {
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Live Preview</CardTitle>
+                  <CardTitle className="text-base">{t("studio.ai.preview", "Preview")}</CardTitle>
                   <Badge variant="outline" className="text-xs">
                     {platformSizes[platform].width} x {platformSizes[platform].height}
                   </Badge>
@@ -260,7 +308,7 @@ export default function ManualStudioPage() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleReset} className="gap-1 bg-transparent">
                 <RefreshCw className="h-4 w-4" />
-                Reset
+                {t("studio.manual.reset", "Reset")}
               </Button>
               <Select value={platform} onValueChange={(v) => setPlatform(v as PlatformKey)}>
                 <SelectTrigger className="flex-1">
@@ -281,24 +329,28 @@ export default function ManualStudioPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Type className="h-4 w-4" />
-                  Content
+                  {t("studio.manual.content", "Content")}
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Main Text</Label>
-                  <Textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={4}
-                    placeholder="Enter your post content..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Author / Credit (optional)</Label>
-                  <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your name or brand" />
-                </div>
-              </CardContent>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t("studio.manual.contentLabel", "Main Text")}</Label>
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={4}
+                  placeholder={t("studio.manual.contentPlaceholder", "Enter your post content...")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("studio.manual.author", "Author / Credit (optional)")}</Label>
+                <Input
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder={t("studio.manual.authorPlaceholder", "Your name or brand")}
+                />
+              </div>
+            </CardContent>
             </Card>
 
             {/* Background */}
@@ -306,7 +358,7 @@ export default function ManualStudioPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Droplet className="h-4 w-4" />
-                  Background
+                  {t("studio.manual.background", "Background")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -314,7 +366,7 @@ export default function ManualStudioPage() {
                   value={backgroundType}
                   onValueChange={(v) => {
                     if (v === "custom" && !canUseCustomBackground) {
-                      toast.error("Custom backgrounds require a Premium or Pro subscription")
+                      toast.error(t("studio.manual.bg.lock"))
                       return
                     }
                     setBackgroundType(v as typeof backgroundType)
@@ -465,7 +517,7 @@ export default function ManualStudioPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Palette className="h-4 w-4" />
-                  Typography
+                  {t("studio.manual.typography", "Typography")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -578,7 +630,7 @@ export default function ManualStudioPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <ImageIcon className="h-4 w-4" />
-                  Background Image
+                  {t("studio.manual.background", "Background")} Image
                   {!canUseImages && (
                     <Badge variant="secondary" className="ml-auto text-xs">
                       Pro
@@ -609,12 +661,26 @@ export default function ManualStudioPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Layout className="h-4 w-4" />
-                  Quick Templates
+                  {t("studio.manual.quickTemplates", "Quick Templates")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <Badge variant="secondary" className="rounded-full text-[11px]">
+                    Actif: {appliedTemplateName}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher..."
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
-                  {templates.slice(0, 12).map((template) => (
+                  {filteredTemplates.slice(0, 24).map((template) => (
                     <button
                       key={template.id}
                       onClick={() => applyTemplate(template)}
@@ -631,6 +697,24 @@ export default function ManualStudioPage() {
                     >
                       {template.name.split(" ")[0]}
                       {template.isPremium && <Crown className="absolute right-0.5 top-0.5 h-2 w-2 text-yellow-400" />}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="absolute right-0.5 bottom-0.5 rounded-full bg-black/30 p-0.5 text-white transition hover:bg-black/50"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite(template.id)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            toggleFavorite(template.id)
+                          }
+                        }}
+                        aria-label="Toggle favorite"
+                      >
+                        <Star className={`h-2.5 w-2.5 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
+                      </span>
                     </button>
                   ))}
                 </div>

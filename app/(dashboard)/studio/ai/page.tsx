@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { CreditsModal } from "@/components/studio/credits-modal"
@@ -18,8 +18,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAppStore } from "@/lib/store"
 import { templates, platformSizes, styleOptions, toneOptions, type PlatformKey, type Template } from "@/lib/templates"
 import { toast } from "sonner"
-import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff } from "lucide-react"
+import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff, Search, Star } from "lucide-react"
 import { ShareButtons } from "@/components/studio/share-buttons"
+import { useI18n } from "@/lib/i18n"
 
 export default function AIStudioPage() {
   const { user, setUser, consumeCredit, addPost } = useAppStore()
@@ -42,16 +43,19 @@ export default function AIStudioPage() {
   const [accentColor, setAccentColor] = useState(templates[0].accentColor || "")
   const [fontFamily, setFontFamily] = useState(templates[0].fontFamily)
   const [fontWeight, setFontWeight] = useState(templates[0].fontWeight || 700)
-  // const [fontSize, setFontSize] = useState(templates[0].fontSize)
-  const [fontSize, setFontSize] = useState(20)
+  const [fontSize, setFontSize] = useState(templates[0].fontSize)
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">(templates[0].textAlign)
   const [padding, setPadding] = useState(templates[0].padding)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>("")
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("templates")
   const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
+  const { t } = useI18n()
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
 
@@ -211,9 +215,61 @@ export default function AIStudioPage() {
     // setTimeout(() => setExportTrigger((t) => t + 1), 100)
   }
 
+  // Apply template coming from Templates page
+  useEffect(() => {
+    const stored = sessionStorage.getItem("selectedTemplate")
+    if (stored) {
+      try {
+        const template: Template = JSON.parse(stored)
+        handleTemplateSelect(template)
+        setActiveTab("templates")
+      } catch (e) {
+        console.error("Failed to apply stored template", e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored))
+      } catch {
+        setFavorites([])
+      }
+    }
+  }, [])
+
+  const downloadPreview = useCallback(() => {
+    if (!previewImageUrl) {
+      toast.error("Preview not ready yet. Please try again.")
+      return
+    }
+    const link = document.createElement("a")
+    link.download = `genpost-${platform}-${Date.now()}.png`
+    link.href = previewImageUrl
+    link.click()
+  }, [platform, previewImageUrl])
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favoriteTemplates", JSON.stringify(next))
+      }
+      return next
+    })
+  }
+
+  const filteredTemplates = templates.filter((template) => {
+    if (!templateSearch.trim()) return true
+    const q = templateSearch.toLowerCase()
+    return template.name.toLowerCase().includes(q) || template.category.toLowerCase().includes(q)
+  })
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <DashboardHeader title="AI Generator" description="Let AI create stunning posts for you" />
+      <DashboardHeader title={t("studio.ai.headerTitle", "AI Generator")} description={t("studio.ai.headerDesc", "Brief in one line and get social-ready canvases.")} />
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
         {/* Mobile Preview Toggle */}
@@ -224,7 +280,7 @@ export default function AIStudioPage() {
           className="mb-4 w-full gap-2 lg:hidden"
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showPreview ? 'Hide' : 'Show'} Preview
+          {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
         </Button>
 
         {/* Mobile Preview (Sticky Top) */}
@@ -271,7 +327,7 @@ export default function AIStudioPage() {
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-2">
                   <Coins className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Credits</span>
+                  <span className="font-medium">{t("studio.ai.credit", "Credits")}</span>
                 </div>
                 <Badge variant="secondary" className="text-lg">
                   {user?.credits || 0}
@@ -289,10 +345,10 @@ export default function AIStudioPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="topic">Topic / Idea</Label>
+                  <Label htmlFor="topic">{t("studio.ai.topic", "Topic / Idea")}</Label>
                   <Textarea
                     id="topic"
-                    placeholder="e.g., Success requires persistence and dedication..."
+                    placeholder={t("studio.ai.topic.placeholder", "e.g., Success requires persistence and dedication...")}
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     rows={3}
@@ -301,7 +357,7 @@ export default function AIStudioPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Style</Label>
+                    <Label>{t("studio.ai.style", "Style")}</Label>
                     <Select value={style} onValueChange={setStyle}>
                       <SelectTrigger>
                         <SelectValue />
@@ -309,7 +365,7 @@ export default function AIStudioPage() {
                       <SelectContent>
                         {styleOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(`styles.${option.value}`, option.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -317,7 +373,7 @@ export default function AIStudioPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Tone</Label>
+                    <Label>{t("studio.ai.tone", "Tone")}</Label>
                     <Select value={tone} onValueChange={setTone}>
                       <SelectTrigger>
                         <SelectValue />
@@ -325,7 +381,7 @@ export default function AIStudioPage() {
                       <SelectContent>
                         {toneOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(`tone.${option.value}`, option.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -334,7 +390,7 @@ export default function AIStudioPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Platform</Label>
+                  <Label>{t("studio.ai.platform", "Platform")}</Label>
                   <Select value={platform} onValueChange={(v) => setPlatform(v as PlatformKey)}>
                     <SelectTrigger>
                       <SelectValue />
@@ -350,7 +406,7 @@ export default function AIStudioPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="author">Author (optional)</Label>
+                  <Label htmlFor="author">{t("studio.ai.author", "Author (optional)")}</Label>
                   <Input
                     id="author"
                     placeholder="Your name or brand"
@@ -363,12 +419,12 @@ export default function AIStudioPage() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
+                      {t("studio.ai.generating", "Generating...")}
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-4 w-4" />
-                      Generate with AI
+                      {t("studio.ai.generate", "Generate with AI")}
                     </>
                   )}
                 </Button>
@@ -384,24 +440,41 @@ export default function AIStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <Badge variant="secondary" className="rounded-full text-xs">
+                    {t("studio.ai.activeTemplate", "Template actif")}: {selectedTemplate.name}
+                  </Badge>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Favoris: {favorites.length}</span>
+                  </div>
+                </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="templates">Templates</TabsTrigger>
-                    <TabsTrigger value="text">Text</TabsTrigger>
-                    <TabsTrigger value="style">Style</TabsTrigger>
+                    <TabsTrigger value="templates">{t("studio.ai.templates", "Templates")}</TabsTrigger>
+                    <TabsTrigger value="text">{t("studio.ai.text", "Text")}</TabsTrigger>
+                    <TabsTrigger value="style">{t("studio.ai.styleTab", "Style")}</TabsTrigger>
                     <TabsTrigger value="image" className="gap-1">
                       <ImageIcon className="h-3 w-3" />
-                      Image
+                      {t("studio.ai.image", "Image")}
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="templates" className="mt-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder={t("studio.ai.templateSearch", "Rechercher un template...")}
+                        value={templateSearch}
+                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
-                      {templates.slice(0, 12).map((template) => (
+                      {filteredTemplates.slice(0, 24).map((template) => (
                         <button
                           key={template.id}
                           onClick={() => handleTemplateSelect(template)}
-                          className={`relative aspect-square rounded-lg p-2 text-xs font-medium transition-all ${selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
+                          className={`relative aspect-square rounded-lg p-2 text-[10px] font-medium transition-all ${selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
                             }`}
                           style={{
                             background:
@@ -412,8 +485,26 @@ export default function AIStudioPage() {
                               : "none",
                           }}
                         >
-                          {template.name}
+                          <span className="line-clamp-2">{template.name}</span>
                           {template.isPremium && <Crown className="absolute right-1 top-1 h-3 w-3 text-yellow-400" />}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className="absolute right-1 bottom-1 rounded-full bg-black/30 p-1 text-white transition hover:bg-black/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFavorite(template.id)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                toggleFavorite(template.id)
+                              }
+                            }}
+                            aria-label="Toggle favorite"
+                          >
+                            <Star className={`h-3.5 w-3.5 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -421,22 +512,22 @@ export default function AIStudioPage() {
 
                   <TabsContent value="text" className="mt-4 space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="content-edit">Post Content</Label>
+                      <Label htmlFor="content-edit">{t("studio.ai.postContent", "Post Content")}</Label>
                       <Textarea
                         id="content-edit"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         rows={6}
-                        placeholder="Generated content will appear here..."
+                        placeholder={t("studio.ai.contentPlaceholder", "Generated content will appear here...")}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="author-edit">Author / Brand</Label>
+                      <Label htmlFor="author-edit">{t("studio.ai.authorBrand", "Author / Brand")}</Label>
                       <Input
                         id="author-edit"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={t("studio.ai.authorPlaceholder", "Your name")}
                       />
                     </div>
                   </TabsContent>
@@ -505,9 +596,10 @@ export default function AIStudioPage() {
                   </Button>
                 </div>
                 <ShareButtons
-                  imageDataUrl=""
+                  imageDataUrl={previewImageUrl}
                   content={content}
                   platform={platform}
+                  onDownload={downloadPreview}
                 />
               </CardContent>
             </Card>
@@ -516,37 +608,72 @@ export default function AIStudioPage() {
 
         {/* Desktop Preview (Right Panel - Always Visible) */}
         <div className="hidden flex-1 lg:block">
-          <Card className="sticky top-6 h-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Preview</CardTitle>
-                <Badge variant="outline">
-                  {platformSizes[platform].width} x {platformSizes[platform].height}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="flex h-[calc(100%-4rem)] items-center justify-center p-8">
-              <PreviewCanvas
-                platform={platform}
-                content={content}
-                author={author}
-                gradient={backgroundType === "gradient" ? gradient : undefined}
-                backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
-                borderColor={borderColor}
-                borderWidth={borderWidth}
-                textColor={textColor}
-                accentColor={accentColor}
-                fontFamily={fontFamily}
-                fontWeight={fontWeight}
-                fontSize={fontSize}
-                textAlign={textAlign}
-                padding={padding}
-                backgroundImage={backgroundImage || undefined}
-                onExport={handleExport}
-                exportTrigger={exportTrigger}
-              />
-            </CardContent>
-          </Card>
+          <div className="sticky top-6 space-y-4">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
+                  <Badge variant="outline">
+                    {platformSizes[platform].width} x {platformSizes[platform].height}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex h-[calc(100%-4rem)] items-center justify-center p-8">
+                <PreviewCanvas
+                  platform={platform}
+                  content={content}
+                  author={author}
+                  gradient={backgroundType === "gradient" ? gradient : undefined}
+                  backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                  borderColor={borderColor}
+                  borderWidth={borderWidth}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  padding={padding}
+                  backgroundImage={backgroundImage || undefined}
+                  onRender={setPreviewImageUrl}
+                  onExport={handleExport}
+                  exportTrigger={exportTrigger}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Multi-preview</CardTitle>
+                <p className="text-xs text-muted-foreground">Vérifiez rapidement le cadrage en 9:16, 1:1 et Story.</p>
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 gap-3">
+                {["tiktok", "instagram-square", "instagram-story"].map((p) => (
+                  <div key={p} className="rounded-lg border border-border/70 bg-card/60 p-2 text-center text-xs">
+                    <p className="mb-2 font-semibold">{platformSizes[p as PlatformKey].label}</p>
+                    <PreviewCanvas
+                      platform={p as PlatformKey}
+                      content={content}
+                      author={author}
+                      gradient={backgroundType === "gradient" ? gradient : undefined}
+                      backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                      borderColor={borderColor}
+                      borderWidth={borderWidth}
+                      textColor={textColor}
+                      accentColor={accentColor}
+                      fontFamily={fontFamily}
+                      fontWeight={fontWeight}
+                      fontSize={fontSize}
+                      textAlign={textAlign}
+                      padding={padding}
+                      backgroundImage={backgroundImage || undefined}
+                      maxHeight="200px"
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 

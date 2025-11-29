@@ -1,7 +1,11 @@
+ "use client"
+
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export function Footer() {
+  const { t } = useI18n()
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -15,13 +19,13 @@ export function Footer() {
 
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground">
-              Privacy
+              {t("footer.privacy", "Privacy")}
             </Link>
             <Link href="/terms" className="hover:text-foreground">
-              Terms
+              {t("footer.terms", "Terms")}
             </Link>
             <Link href="/support" className="hover:text-foreground">
-              Support
+              {t("footer.support", "Support")}
             </Link>
           </nav>
 

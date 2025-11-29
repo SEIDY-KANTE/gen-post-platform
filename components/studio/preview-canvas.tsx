@@ -20,6 +20,7 @@ interface PreviewCanvasProps {
   textAlign: "left" | "center" | "right"
   padding: number
   backgroundImage?: string
+  onRender?: (dataUrl: string) => void
   onExport?: (dataUrl: string) => void
   exportTrigger?: number
   maxHeight?: string
@@ -229,6 +230,7 @@ export function PreviewCanvas({
   textAlign,
   padding,
   backgroundImage,
+  onRender,
   onExport,
   exportTrigger,
   maxHeight = "70vh",
@@ -322,6 +324,16 @@ export function PreviewCanvas({
       }
     }
 
+    const finalize = () => {
+      if (onRender && canvasRef.current) {
+        try {
+          onRender(canvasRef.current.toDataURL("image/png"))
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     if (backgroundImage) {
       const img = new Image()
       img.crossOrigin = "anonymous"
@@ -373,10 +385,12 @@ export function PreviewCanvas({
           ctx.fillStyle = accentColor || textColor + "cc"
           ctx.fillText(`— ${author}`, x, startY + lines.length * lineHeight + authorFontSize * 1.5)
         }
+        finalize()
       }
       img.src = backgroundImage
     } else {
       drawContent()
+      finalize()
     }
   }, [
     platform,
@@ -394,6 +408,7 @@ export function PreviewCanvas({
     textAlign,
     padding,
     backgroundImage,
+    onRender,
     width,
     height,
   ])

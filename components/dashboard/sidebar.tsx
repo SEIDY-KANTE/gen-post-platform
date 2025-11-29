@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Wand2,
   Palette,
+  Images,
   Layout,
   CreditCard,
   History,
@@ -21,16 +22,18 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { useState } from "react"
+import { useI18n } from "@/lib/i18n"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "AI Generator", href: "/studio/ai", icon: Wand2 },
-  { name: "Manual Editor", href: "/studio/manual", icon: Palette },
-  { name: "Templates", href: "/templates", icon: Layout },
-  { name: "History", href: "/history", icon: History },
-  { name: "Credits", href: "/credits", icon: CreditCard },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "Support", href: "/support", icon: MessageSquare },
+  { name: "Dashboard", key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "AI Generator", key: "ai", href: "/studio/ai", icon: Wand2 },
+  { name: "Manual Editor", key: "manual", href: "/studio/manual", icon: Palette },
+  { name: "Viral Studio", key: "viral", href: "/viral", icon: Images },
+  { name: "Templates", key: "templates", href: "/templates", icon: Layout },
+  { name: "History", key: "history", href: "/history", icon: History },
+  { name: "Credits", key: "credits", href: "/credits", icon: CreditCard },
+  { name: "Profile", key: "profile", href: "/profile", icon: User },
+  { name: "Support", key: "support", href: "/support", icon: MessageSquare },
 ]
 
 export function Sidebar() {
@@ -38,6 +41,7 @@ export function Sidebar() {
   const router = useRouter()
   const { user, logout } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
+  const { t } = useI18n()
 
   const handleLogout = async () => {
     try {
@@ -87,22 +91,22 @@ export function Sidebar() {
         {navigation.map((item) => {
           const isActive = pathname === item.href
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                collapsed && "justify-center px-2",
-              )}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
-          )
-        })}
+          <Link
+            key={item.name}
+            href={item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>{t(`nav.${item.key}`, item.name)}</span>}
+          </Link>
+        )
+      })}
       </nav>
 
       {/* Credits indicator */}

@@ -24,9 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useI18n } from "@/lib/i18n"
 
 export default function ProfilePage() {
   const { user, setUser, posts } = useAppStore()
+  const { t } = useI18n()
   const [name, setName] = useState(user?.name || "")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -52,11 +54,11 @@ export default function ProfilePage() {
 
       // Update local state
       setUser({ ...user, name })
-      toast.success("Profile updated successfully")
+      toast.success(t("profile.save", "Profile updated successfully"))
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating profile:', error)
-      toast.error("Failed to update profile")
+      toast.error(t("error.profileUpdate", "Failed to update profile"))
     } finally {
       setIsSaving(false)
     }
@@ -112,10 +114,10 @@ export default function ProfilePage() {
 
       // Update local state
       setUser({ ...user, avatar: publicUrl })
-      toast.success("Profile picture updated!")
+      toast.success(t("profile.avatarUpdated", "Profile picture updated!"))
     } catch (error) {
       console.error('Error uploading avatar:', error)
-      toast.error("Failed to upload profile picture")
+      toast.error(t("error.avatarUpload", "Failed to upload profile picture"))
     } finally {
       setIsUploadingAvatar(false)
     }
@@ -136,7 +138,7 @@ export default function ProfilePage() {
 
       // Update local state
       setUser({ ...user, plan: 'free' })
-      toast.success("Subscription cancelled successfully")
+      toast.success(t("profile.cancelled", "Subscription cancelled successfully"))
       setShowCancelDialog(false)
     } catch (error) {
       console.error('Error cancelling subscription:', error)
@@ -172,7 +174,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardHeader title="Profile" description="Manage your account settings" />
+      <DashboardHeader title={t("profile.title", "Profile")} description={t("profile.subtitle", "Manage your account settings")} />
 
       <div className="mx-auto max-w-4xl p-4 md:p-6">
         <div className="grid gap-6 md:grid-cols-3">
@@ -249,72 +251,72 @@ export default function ProfilePage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      Profile Information
-                    </CardTitle>
-                    <CardDescription>Update your personal details</CardDescription>
-                  </div>
-                  {!isEditing && (
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    {t("profile.info", "Profile Information")}
+                  </CardTitle>
+                  <CardDescription>{t("profile.subtitle", "Manage your account settings")}</CardDescription>
+                </div>
+                {!isEditing && (
                     <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                      Edit
+                      {t("profile.edit", "Edit")}
                     </Button>
                   )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-10"
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="email" value={user?.email || ""} disabled className="pl-10" />
-                    </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">{t("profile.name", "Full Name")}</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-10"
+                      disabled={!isEditing}
+                    />
                   </div>
                 </div>
 
-                {isEditing && (
-                  <div className="flex gap-2 pt-2">
-                    <Button onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                      Cancel
-                    </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t("profile.email", "Email Address")}</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input id="email" value={user?.email || ""} disabled className="pl-10" />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+
+              {isEditing && (
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t("profile.save", "Save Changes")}
+                      </>
+                    ) : (
+                      t("profile.save", "Save Changes")
+                    )}
+                  </Button>
+                  <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                    {t("profile.cancel", "Cancel")}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
             {/* Subscription & Credits */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  Subscription & Credits
+                  {t("profile.plan", "Subscription & Credits")}
                 </CardTitle>
-                <CardDescription>Manage your plan and credits usage</CardDescription>
+                <CardDescription>{t("profile.subtitle", "Manage your account settings")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Current Plan */}
@@ -332,14 +334,18 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="font-semibold">
-                          {user?.plan === "free" ? "Free Plan" : user?.plan === "premium" ? "Premium Plan" : "Pro Plan"}
+                          {user?.plan === "free"
+                            ? t("profile.plan.free", "Free Plan")
+                            : user?.plan === "premium"
+                              ? t("profile.plan.premium", "Premium Plan")
+                              : t("profile.plan.pro", "Pro Plan")}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {user?.plan === "free"
-                            ? "Basic features included"
+                            ? t("profile.plan.free", "Basic features included")
                             : user?.plan === "premium"
-                              ? "Premium features included"
-                              : "Pro features included"}
+                              ? t("profile.plan.premium", "Premium features included")
+                              : t("profile.plan.pro", "Pro features included")}
                         </p>
                       </div>
                     </div>
@@ -347,7 +353,7 @@ export default function ProfilePage() {
                       <Link href="/credits">
                         <Button size="sm" className="gap-1">
                           <Crown className="h-3 w-3" />
-                          Upgrade
+                          {t("credits.cta.upgrade", "Upgrade")}
                         </Button>
                       </Link>
                     )}
@@ -359,7 +365,7 @@ export default function ProfilePage() {
                         onClick={() => setShowCancelDialog(true)}
                       >
                         <X className="h-3 w-3" />
-                        Cancel Plan
+                        {t("profile.cancel", "Cancel")}
                       </Button>
                     )}
                   </div>
@@ -370,14 +376,20 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Coins className="h-4 w-4 text-primary" />
-                      <span className="font-medium">AI Credits</span>
+                      <span className="font-medium">{t("profile.credits", "AI Credits")}</span>
                     </div>
                     <span className="text-lg font-bold text-primary">
                       {user?.credits || 0}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Credits are used for AI-powered content generation</p>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-border">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(100, creditsPercentage)}%` }}
+                  />
                 </div>
+                <p className="text-xs text-muted-foreground">{t("credits.tip", "Recharge before you hit 0 to avoid interruptions.")}</p>
+              </div>
 
                 <Separator />
 
@@ -386,13 +398,13 @@ export default function ProfilePage() {
                   <Link href="/credits">
                     <Button variant="outline" className="w-full justify-start gap-2 bg-transparent">
                       <CreditCard className="h-4 w-4" />
-                      Buy More Credits
+                      {t("profile.buyCredits", "Buy More Credits")}
                     </Button>
                   </Link>
                   <Link href="/history">
                     <Button variant="outline" className="w-full justify-start gap-2 bg-transparent">
                       <BarChart3 className="h-4 w-4" />
-                      View Usage History
+                      {t("profile.viewHistory", "View Usage History")}
                     </Button>
                   </Link>
                 </div>
@@ -404,14 +416,14 @@ export default function ProfilePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
-                  Account Activity
+                  {t("profile.activity", "Account Activity")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-lg border border-border p-4 text-center">
                     <p className="text-3xl font-bold text-primary">{posts.length}</p>
-                    <p className="text-sm text-muted-foreground">Total Posts</p>
+                    <p className="text-sm text-muted-foreground">{t("profile.totalPosts", "Total Posts")}</p>
                   </div>
                   <div className="rounded-lg border border-border p-4 text-center">
                     <p className="text-3xl font-bold">
@@ -423,7 +435,7 @@ export default function ProfilePage() {
                         }).length
                       }
                     </p>
-                    <p className="text-sm text-muted-foreground">This Month</p>
+                    <p className="text-sm text-muted-foreground">{t("profile.thisMonth", "This Month")}</p>
                   </div>
                   <div className="rounded-lg border border-border p-4 text-center">
                     <p className="text-3xl font-bold">
@@ -436,7 +448,7 @@ export default function ProfilePage() {
                         }).length
                       }
                     </p>
-                    <p className="text-sm text-muted-foreground">This Week</p>
+                    <p className="text-sm text-muted-foreground">{t("profile.thisWeek", "This Week")}</p>
                   </div>
                 </div>
               </CardContent>

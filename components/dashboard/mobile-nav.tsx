@@ -11,6 +11,7 @@ import {
     LayoutDashboard,
     Wand2,
     Palette,
+    Images,
     Layout as LayoutIcon,
     History as HistoryIcon,
     CreditCard,
@@ -19,16 +20,18 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { useI18n } from "@/lib/i18n"
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "AI Generator", href: "/studio/ai", icon: Wand2 },
-    { name: "Manual Editor", href: "/studio/manual", icon: Palette },
-    { name: "Templates", href: "/templates", icon: LayoutIcon },
-    { name: "History", href: "/history", icon: HistoryIcon },
-    { name: "Credits", href: "/credits", icon: CreditCard },
-    { name: "Profile", href: "/profile", icon: UserIcon },
-    { name: "Support", href: "/support", icon: MessageSquare },
+    { name: "Dashboard", key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "AI Generator", key: "ai", href: "/studio/ai", icon: Wand2 },
+    { name: "Manual Editor", key: "manual", href: "/studio/manual", icon: Palette },
+    { name: "Viral Studio", key: "viral", href: "/viral", icon: Images },
+    { name: "Templates", key: "templates", href: "/templates", icon: LayoutIcon },
+    { name: "History", key: "history", href: "/history", icon: HistoryIcon },
+    { name: "Credits", key: "credits", href: "/credits", icon: CreditCard },
+    { name: "Profile", key: "profile", href: "/profile", icon: UserIcon },
+    { name: "Support", key: "support", href: "/support", icon: MessageSquare },
 ]
 
 export function MobileNav() {
@@ -36,6 +39,7 @@ export function MobileNav() {
     const router = useRouter()
     const { user, logout } = useAppStore()
     const [open, setOpen] = useState(false)
+    const { t } = useI18n()
 
     const handleLogout = async () => {
         try {
@@ -90,24 +94,24 @@ export function MobileNav() {
                         <nav className="flex-1 space-y-1 p-3">
                             {navigation.map((item) => {
                                 const isActive = pathname === item.href
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        onClick={() => setOpen(false)}
-                                        className={cn(
-                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                                            isActive
-                                                ? "bg-primary text-primary-foreground"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                    >
-                                        <item.icon className="h-5 w-5 shrink-0" />
-                                        <span>{item.name}</span>
-                                    </Link>
-                                )
-                            })}
-                        </nav>
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                onClick={() => setOpen(false)}
+                                className={cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                    isActive
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                            >
+                                <item.icon className="h-5 w-5 shrink-0" />
+                                <span>{t(`nav.${item.key}`, item.name)}</span>
+                            </Link>
+                        )
+                    })}
+                </nav>
 
                         {/* Credits Section */}
                         {user && (
