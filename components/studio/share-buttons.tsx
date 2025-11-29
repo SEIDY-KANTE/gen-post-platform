@@ -8,7 +8,7 @@ interface ShareButtonsProps {
     imageDataUrl: string
     content: string
     platform: string
-    onDownload: () => void
+    onDownload?: () => void
 }
 
 export function ShareButtons({ imageDataUrl, content, platform, onDownload }: ShareButtonsProps) {
@@ -17,7 +17,9 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     const shareToInstagram = async () => {
         // Instagram doesn't support direct web sharing
         // Download image and copy caption to clipboard
-        onDownload()
+        if (onDownload) {
+            onDownload()
+        }
 
         try {
             await navigator.clipboard.writeText(content)
@@ -29,7 +31,9 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
 
     const shareViaWebShare = async (platformName: string) => {
         if (!canShare) {
-            onDownload()
+            if (onDownload) {
+                onDownload()
+            }
             toast.info(`Download complete! Open ${platformName} to share.`)
             return
         }
@@ -50,7 +54,9 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
         } catch (error) {
             // User cancelled or error occurred
             if ((error as Error).name !== 'AbortError') {
-                onDownload()
+                if (onDownload) {
+                    onDownload()
+                }
                 toast.info(`Download complete! Open ${platformName} to share.`)
             }
         }

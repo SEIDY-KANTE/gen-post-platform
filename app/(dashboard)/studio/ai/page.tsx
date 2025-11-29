@@ -123,11 +123,13 @@ export default function AIStudioPage() {
 
   const handleExport = useCallback(
     async (dataUrl: string) => {
+      // Download the image first
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
 
+      // Then save to history
       const savePromise = addPost({
         title: topic || "Untitled Post",
         content,
@@ -151,8 +153,8 @@ export default function AIStudioPage() {
 
       toast.promise(savePromise, {
         loading: 'Saving to history...',
-        success: 'Post saved to history!',
-        error: 'Exported, but failed to save to history',
+        success: 'Post exported and saved!',
+        error: 'Failed to save to history',
       })
 
     },
@@ -206,7 +208,8 @@ export default function AIStudioPage() {
     if (exportPlatform !== platform) {
       setPlatform(exportPlatform)
     }
-    setTimeout(() => setExportTrigger((t) => t + 1), 100)
+    // Don't automatically trigger export - user needs to click Export button
+    // setTimeout(() => setExportTrigger((t) => t + 1), 100)
   }
 
   return (
@@ -254,8 +257,6 @@ export default function AIStudioPage() {
                   textAlign={textAlign}
                   padding={padding}
                   backgroundImage={backgroundImage || undefined}
-                  onExport={handleExport}
-                  exportTrigger={exportTrigger}
                   maxHeight="35vh"
                 />
               </CardContent>
@@ -508,7 +509,6 @@ export default function AIStudioPage() {
                   imageDataUrl=""
                   content={content}
                   platform={platform}
-                  onDownload={() => setExportTrigger((t) => t + 1)}
                 />
               </CardContent>
             </Card>

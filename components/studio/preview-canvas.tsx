@@ -406,15 +406,21 @@ export function PreviewCanvas({
   }, [fontLoaded, drawCanvas])
 
   useEffect(() => {
-    if (exportTrigger && exportTrigger > prevExportTrigger.current && canvasRef.current && onExport) {
-      prevExportTrigger.current = exportTrigger
+    // Only export if trigger increased AND we haven't exported this trigger value yet
+    const trigger = exportTrigger || 0
+    if (trigger > 0 && trigger > prevExportTrigger.current && canvasRef.current && onExport) {
+      prevExportTrigger.current = trigger
+
       // Wait a bit for canvas to be fully rendered
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (canvasRef.current) {
           const dataUrl = canvasRef.current.toDataURL("image/png")
+          // Call the callback for saving to history
           onExport(dataUrl)
         }
       }, 100)
+
+      return () => clearTimeout(timer)
     }
   }, [exportTrigger, onExport])
 

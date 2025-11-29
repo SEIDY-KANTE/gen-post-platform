@@ -1,12 +1,24 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { Moon, Sun, Sparkles } from "lucide-react"
+import { useAuth } from "@/lib/hooks/useAuth"
 
 export function LandingHeader() {
   const { theme, setTheme } = useTheme()
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  // Redirect logged-in users to dashboard
+  // useEffect(() => {
+  //   if (!loading && user) {
+  //     router.push("/dashboard")
+  //   }
+  // }, [loading, user, router])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -45,14 +57,26 @@ export function LandingHeader() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="sm">Get Started</Button>
-          </Link>
+          {!loading && (
+            <>
+              {user ? (
+                <Link href="/dashboard">
+                  <Button size="sm">Dashboard</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button size="sm">Get Started</Button>
+                  </Link>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -17,16 +17,19 @@ export async function updateSession(request: NextRequest) {
                     return request.cookies.get(name)?.value
                 },
                 set(name: string, value: string, options: CookieOptions) {
+                    // Update request cookies
                     request.cookies.set({
                         name,
                         value,
                         ...options,
                     })
+                    // Create new response with updated cookies
                     response = NextResponse.next({
                         request: {
                             headers: request.headers,
                         },
                     })
+                    // Set cookie in response
                     response.cookies.set({
                         name,
                         value,
@@ -34,16 +37,19 @@ export async function updateSession(request: NextRequest) {
                     })
                 },
                 remove(name: string, options: CookieOptions) {
+                    // Update request cookies
                     request.cookies.set({
                         name,
                         value: '',
                         ...options,
                     })
+                    // Create new response
                     response = NextResponse.next({
                         request: {
                             headers: request.headers,
                         },
                     })
+                    // Remove cookie from response
                     response.cookies.set({
                         name,
                         value: '',
@@ -54,7 +60,8 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Refresh session if needed
+    // IMPORTANT: Just refresh the session, don't redirect
+    // Let the client-side handle redirects based on auth state
     await supabase.auth.getUser()
 
     return response

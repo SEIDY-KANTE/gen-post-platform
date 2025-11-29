@@ -77,18 +77,18 @@ export default function ManualStudioPage() {
 
   const handleExport = useCallback(
     (dataUrl: string) => {
+      // Download the image first
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
 
+      // Then save to history
       const savePromise = addPost({
-        id: Date.now().toString(),
         title: content.substring(0, 30) + "...",
         content,
         template: "custom",
         platform,
-        createdAt: new Date(),
         thumbnail: dataUrl,
         author,
         gradient:
@@ -112,8 +112,8 @@ export default function ManualStudioPage() {
 
       toast.promise(savePromise, {
         loading: 'Saving to history...',
-        success: 'Post saved to history!',
-        error: 'Exported, but failed to save to history',
+        success: 'Post exported and saved!',
+        error: 'Failed to save to history',
       })
     },
     [
@@ -187,7 +187,8 @@ export default function ManualStudioPage() {
     if (exportPlatform !== platform) {
       setPlatform(exportPlatform)
     }
-    setTimeout(() => setExportTrigger((t) => t + 1), 100)
+    // Don't automatically trigger export - user needs to click Export button
+    // setTimeout(() => setExportTrigger((t) => t + 1), 100)
   }
 
   // Compute background for canvas based on type
@@ -244,8 +245,6 @@ export default function ManualStudioPage() {
                   textAlign={textAlign}
                   padding={padding}
                   backgroundImage={backgroundImage || undefined}
-                  onExport={handleExport}
-                  exportTrigger={exportTrigger}
                   maxHeight="35vh"
                 />
               </CardContent>
@@ -589,7 +588,7 @@ export default function ManualStudioPage() {
               </CardHeader>
               <CardContent>
                 {canUseImages ? (
-                  <ImageUpload value={backgroundImage} onChange={setBackgroundImage} isPro={true} />
+                  <ImageUpload currentImage={backgroundImage} onImageSelect={setBackgroundImage} isPro={true} />
                 ) : (
                   <div className="text-center py-6 rounded-lg border border-dashed">
                     <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
@@ -654,7 +653,6 @@ export default function ManualStudioPage() {
                   imageDataUrl=""
                   content={content}
                   platform={platform}
-                  onDownload={() => setExportTrigger((t) => t + 1)}
                 />
               </CardContent>
             </Card>

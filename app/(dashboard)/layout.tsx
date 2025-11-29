@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { MobileNav } from "@/components/dashboard/mobile-nav"
@@ -16,7 +16,13 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const { isAuthenticated, fetchUser } = useAppStore()
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Initialize user data on mount if authenticated
   useEffect(() => {
@@ -25,13 +31,21 @@ export default function DashboardLayout({
     }
   }, [user?.id, isAuthenticated, fetchUser])
 
+  // Only redirect to login if we're sure user is not authenticated
+  // Wait for auth state to be loaded before redirecting
   useEffect(() => {
-    if (!isAuthenticated && !user) {
+    if (!loading && !user && mounted) {
       router.push("/login")
     }
-  }, [isAuthenticated, user, router])
+  }, [loading, user, mounted, router])
 
-  if (!isAuthenticated && !user) {
+  // Show nothing while loading or not mounted
+  if (!mounted || loading) {
+    return null
+  }
+
+  // Don't render if no user after loading
+  if (!user) {
     return null
   }
 
