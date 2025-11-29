@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { ImageUpload } from "@/components/studio/image-upload"
@@ -33,6 +33,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Search,
+  Star,
 } from "lucide-react"
 import { ExportDialog } from "@/components/studio/export-dialog"
 import { ShareButtons } from "@/components/studio/share-buttons"
@@ -71,6 +73,9 @@ export default function ManualStudioPage() {
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [appliedTemplateName, setAppliedTemplateName] = useState("Custom")
 
   const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
   const canUseImages = user?.plan === "pro"
@@ -153,6 +158,7 @@ export default function ManualStudioPage() {
     setBorderWidth(0)
     setAccentColor("")
     setBackgroundImage(null)
+    setAppliedTemplateName("Custom")
     toast.info("Editor reset to defaults")
   }
 
@@ -180,6 +186,7 @@ export default function ManualStudioPage() {
     setBorderWidth(template.borderWidth || 0)
     setAccentColor(template.accentColor || "")
     setBackgroundImage(null)
+    setAppliedTemplateName(template.name)
     toast.success(`Applied "${template.name}" template`)
   }
 
@@ -199,6 +206,45 @@ export default function ManualStudioPage() {
         ? `linear-gradient(${customGradient.angle}deg, ${customGradient.color1} 0%, ${customGradient.color2} 100%)`
         : undefined
   const canvasBackgroundColor = backgroundType === "solid" ? solidColor : undefined
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("selectedTemplate")
+    if (stored) {
+      try {
+        const template: Template = JSON.parse(stored)
+        applyTemplate(template)
+      } catch (e) {
+        console.error("Failed to apply stored template", e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored))
+      } catch {
+        setFavorites([])
+      }
+    }
+  }, [])
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favoriteTemplates", JSON.stringify(next))
+      }
+      return next
+    })
+  }
+
+  const filteredTemplates = templates.filter((template) => {
+    if (!templateSearch.trim()) return true
+    const q = templateSearch.toLowerCase()
+    return template.name.toLowerCase().includes(q) || template.category.toLowerCase().includes(q)
+  })
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -613,8 +659,22 @@ export default function ManualStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <Badge variant="secondary" className="rounded-full text-[11px]">
+                    Actif: {appliedTemplateName}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher..."
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
-                  {templates.slice(0, 12).map((template) => (
+                  {filteredTemplates.slice(0, 24).map((template) => (
                     <button
                       key={template.id}
                       onClick={() => applyTemplate(template)}
@@ -631,6 +691,16 @@ export default function ManualStudioPage() {
                     >
                       {template.name.split(" ")[0]}
                       {template.isPremium && <Crown className="absolute right-0.5 top-0.5 h-2 w-2 text-yellow-400" />}
+                      <button
+                        className="absolute right-0.5 bottom-0.5 rounded-full bg-black/30 p-0.5 text-white transition hover:bg-black/50"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite(template.id)
+                        }}
+                        aria-label="Toggle favorite"
+                      >
+                        <Star className={`h-2.5 w-2.5 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
+                      </button>
                     </button>
                   ))}
                 </div>

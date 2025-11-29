@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,16 +8,45 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { templates, templateCategories, type Template } from "@/lib/templates"
-import { Search, Wand2, Palette, Lock, Sparkles } from "lucide-react"
+import { Search, Wand2, Palette, Lock, Sparkles, Star } from "lucide-react"
 
 export default function TemplatesPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [favorites, setFavorites] = useState<string[]>([])
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored))
+      } catch {
+        setFavorites([])
+      }
+    }
+  }, [])
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favoriteTemplates", JSON.stringify(next))
+      }
+      return next
+    })
+  }
+
+  const categories = [{ id: "favorites", label: "Favoris" }, ...templateCategories]
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = selectedCategory === "all" || template.category === selectedCategory
+    const matchesCategory =
+      selectedCategory === "all"
+        ? true
+        : selectedCategory === "favorites"
+          ? favorites.includes(template.id)
+          : template.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
@@ -43,7 +72,15 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardHeader title="Templates" description="Choose a template to start creating" />
+      <DashboardHeader
+        title="Templates"
+        description="Choisissez un style, appliquez-le directement en mode IA ou manuel."
+        action={
+          <Button size="sm" className="rounded-full" onClick={() => router.push("/studio/ai")}>
+            Lancer l&apos;IA
+          </Button>
+        }
+      />
 
       <div className="p-4 md:p-6">
         {/* Search and Filter */}
@@ -59,7 +96,7 @@ export default function TemplatesPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {templateCategories.map((category) => (
+            {categories.map((category) => (
               <Button
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
@@ -84,7 +121,12 @@ export default function TemplatesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredTemplates.map((template) => (
-              <Card key={template.id} className="group overflow-hidden">
+              <Card
+                key={template.id}
+                className="group overflow-hidden transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
+                onClick={() => handleUseTemplate(template, "ai")}
+                role="button"
+              >
                 <div
                   className="relative aspect-square flex items-center justify-center p-6 text-center transition-transform group-hover:scale-[1.02]"
                   style={{
@@ -109,29 +151,41 @@ export default function TemplatesPage() {
                     </span>
                   )}
 
-                  {template.isPremium && (
-                    <div className="absolute right-3 top-3">
-                      <Badge className="gap-1 bg-yellow-500 text-yellow-950">
+                  <div className="absolute left-3 top-3 flex items-center gap-2">
+                    <Badge variant="secondary" className="rounded-full text-[11px] capitalize">
+                      {template.category}
+                    </Badge>
+                    {template.isPremium && (
+                      <Badge className="gap-1 rounded-full bg-amber-400/90 text-amber-950">
                         <Lock className="h-3 w-3" />
                         Pro
                       </Badge>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <button
+                    className="absolute right-3 top-3 rounded-full bg-black/30 p-1 text-white opacity-80 transition hover:bg-black/50"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleFavorite(template.id)
+                    }}
+                    aria-label="Ajouter aux favoris"
+                  >
+                    <Star className={`h-4 w-4 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
+                  </button>
 
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button size="sm" onClick={() => handleUseTemplate(template, "ai")} className="gap-1">
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-black/55 px-3 py-2 opacity-90">
+                    <Button size="sm" variant="default" className="gap-1 rounded-full" onClick={(e) => { e.stopPropagation(); handleUseTemplate(template, "ai") }}>
                       <Wand2 className="h-4 w-4" />
-                      AI Mode
+                      Mode IA
                     </Button>
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => handleUseTemplate(template, "manual")}
-                      className="gap-1"
+                      className="gap-1 rounded-full"
+                      onClick={(e) => { e.stopPropagation(); handleUseTemplate(template, "manual") }}
                     >
                       <Palette className="h-4 w-4" />
-                      Manual
+                      Manuel
                     </Button>
                   </div>
                 </div>
@@ -143,9 +197,6 @@ export default function TemplatesPage() {
                       <h3 className="font-medium">{template.name}</h3>
                       <p className="text-xs capitalize text-muted-foreground">{template.category}</p>
                     </div>
-                    <Badge variant="secondary" className="text-xs capitalize">
-                      {template.category}
-                    </Badge>
                   </div>
                 </CardContent>
               </Card>

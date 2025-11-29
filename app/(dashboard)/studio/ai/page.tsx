@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
 import { CreditsModal } from "@/components/studio/credits-modal"
@@ -18,7 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAppStore } from "@/lib/store"
 import { templates, platformSizes, styleOptions, toneOptions, type PlatformKey, type Template } from "@/lib/templates"
 import { toast } from "sonner"
-import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff } from "lucide-react"
+import { Sparkles, Wand2, Download, Palette, Loader2, Coins, Crown, ImageIcon, Eye, EyeOff, Search, Star } from "lucide-react"
 import { ShareButtons } from "@/components/studio/share-buttons"
 
 export default function AIStudioPage() {
@@ -42,8 +42,7 @@ export default function AIStudioPage() {
   const [accentColor, setAccentColor] = useState(templates[0].accentColor || "")
   const [fontFamily, setFontFamily] = useState(templates[0].fontFamily)
   const [fontWeight, setFontWeight] = useState(templates[0].fontWeight || 700)
-  // const [fontSize, setFontSize] = useState(templates[0].fontSize)
-  const [fontSize, setFontSize] = useState(20)
+  const [fontSize, setFontSize] = useState(templates[0].fontSize)
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">(templates[0].textAlign)
   const [padding, setPadding] = useState(templates[0].padding)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
@@ -52,6 +51,8 @@ export default function AIStudioPage() {
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("templates")
   const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
 
@@ -210,6 +211,47 @@ export default function AIStudioPage() {
     // Don't automatically trigger export - user needs to click Export button
     // setTimeout(() => setExportTrigger((t) => t + 1), 100)
   }
+
+  // Apply template coming from Templates page
+  useEffect(() => {
+    const stored = sessionStorage.getItem("selectedTemplate")
+    if (stored) {
+      try {
+        const template: Template = JSON.parse(stored)
+        handleTemplateSelect(template)
+        setActiveTab("templates")
+      } catch (e) {
+        console.error("Failed to apply stored template", e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("favoriteTemplates") : null
+    if (stored) {
+      try {
+        setFavorites(JSON.parse(stored))
+      } catch {
+        setFavorites([])
+      }
+    }
+  }, [])
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("favoriteTemplates", JSON.stringify(next))
+      }
+      return next
+    })
+  }
+
+  const filteredTemplates = templates.filter((template) => {
+    if (!templateSearch.trim()) return true
+    const q = templateSearch.toLowerCase()
+    return template.name.toLowerCase().includes(q) || template.category.toLowerCase().includes(q)
+  })
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -384,6 +426,14 @@ export default function AIStudioPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <Badge variant="secondary" className="rounded-full text-xs">
+                    Template actif: {selectedTemplate.name}
+                  </Badge>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Favoris: {favorites.length}</span>
+                  </div>
+                </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -396,12 +446,21 @@ export default function AIStudioPage() {
                   </TabsList>
 
                   <TabsContent value="templates" className="mt-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher un template..."
+                        value={templateSearch}
+                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
-                      {templates.slice(0, 12).map((template) => (
+                      {filteredTemplates.slice(0, 24).map((template) => (
                         <button
                           key={template.id}
                           onClick={() => handleTemplateSelect(template)}
-                          className={`relative aspect-square rounded-lg p-2 text-xs font-medium transition-all ${selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
+                          className={`relative aspect-square rounded-lg p-2 text-[10px] font-medium transition-all ${selectedTemplate.id === template.id ? "ring-2 ring-primary ring-offset-2" : ""
                             }`}
                           style={{
                             background:
@@ -412,8 +471,18 @@ export default function AIStudioPage() {
                               : "none",
                           }}
                         >
-                          {template.name}
+                          <span className="line-clamp-2">{template.name}</span>
                           {template.isPremium && <Crown className="absolute right-1 top-1 h-3 w-3 text-yellow-400" />}
+                          <button
+                            className="absolute right-1 bottom-1 rounded-full bg-black/30 p-1 text-white transition hover:bg-black/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFavorite(template.id)
+                            }}
+                            aria-label="Toggle favorite"
+                          >
+                            <Star className={`h-3.5 w-3.5 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
+                          </button>
                         </button>
                       ))}
                     </div>

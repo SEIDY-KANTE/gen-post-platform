@@ -376,7 +376,15 @@ export default function ProfilePage() {
                       {user?.credits || 0}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Credits are used for AI-powered content generation</p>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(100, creditsPercentage)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Credits used pour l&apos;IA et l&apos;export. Rechargez avant d&apos;atteindre 0 pour éviter les interruptions.
+                  </p>
                 </div>
 
                 <Separator />

@@ -1,57 +1,27 @@
-import {
-  Sparkles,
-  Palette,
-  Layout,
-  Download,
-  Layers,
-  Wand2,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Twitter,
-} from "lucide-react"
+import { Sparkles, Palette, Layout, Send, Wand2, Smartphone, Instagram, Facebook, Linkedin, Twitter } from "lucide-react"
 
-const features = [
+const pillars = [
   {
     icon: Sparkles,
-    title: "AI-Powered Generation",
-    description: "Describe your vision and let AI create stunning designs with optimized text for each platform.",
+    title: "Créer en un prompt",
+    tag: "AI Studio",
+    description: "Brief multilingue, ton et voix respectés. Textes générés et adaptés à chaque réseau.",
+    bullets: ["Suggestions auto de visuels", "Scripts courts pour TikTok/Reels", "Hashtags optimisés par audience"],
   },
   {
     icon: Palette,
-    title: "Visual Editor Studio",
-    description:
-      "Fine-tune every detail with our intuitive drag-and-drop editor. Full control over fonts, colors, and layouts.",
+    title: "Personnaliser en 30s",
+    tag: "Visual editor",
+    description: "Glisser-déposer, grilles fluides, palettes et typos mémorisées pour ta marque.",
+    bullets: ["Palettes synchronisées", "Variantes motion prêtes en 1 clic", "Fond AI: gradients, motifs, photos"],
   },
   {
-    icon: Layout,
-    title: "Smart Templates",
-    description: "Start with professionally designed templates for quotes, marketing, educational content, and more.",
+    icon: Send,
+    title: "Publier partout",
+    tag: "Resize & export",
+    description: "Exports PNG/MP4, ratio auto, safe zones vérifiées. Handoff parfait pour tes réseaux.",
+    bullets: ["Exports IG, TikTok, LinkedIn, X", "4K et webp léger", "Planification via pack social"],
   },
-  {
-    icon: Layers,
-    title: "Multi-Platform Support",
-    description: "Create once, export for all platforms. Automatic resizing for Instagram, TikTok, LinkedIn, and more.",
-  },
-  {
-    icon: Wand2,
-    title: "Background Generator",
-    description:
-      "Generate beautiful backgrounds with AI - gradients, patterns, or custom images that match your brand.",
-  },
-  {
-    icon: Download,
-    title: "High-Quality Export",
-    description:
-      "Download in PNG or JPG with perfect resolution. Server-side rendering for crisp, professional results.",
-  },
-]
-
-const platforms = [
-  { icon: Instagram, name: "Instagram" },
-  { icon: Facebook, name: "Facebook" },
-  { icon: Linkedin, name: "LinkedIn" },
-  { icon: Twitter, name: "X/Twitter" },
 ]
 
 export function FeaturesSection() {
@@ -60,40 +30,58 @@ export function FeaturesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Everything you need to create
-            <span className="block text-primary">viral social content</span>
+            Tout le flux créatif,
+            <span className="block text-gradient">du brief à la mise en ligne.</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            From AI generation to pixel-perfect exports, GenPost has all the tools you need.
-          </p>
+          <p className="mt-4 text-lg text-muted-foreground">Un studio complet: génération, édition, export multi-réseaux.</p>
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
+        <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {pillars.map((pillar) => (
             <div
-              key={feature.title}
-              className="group relative rounded-2xl border border-border/50 bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
+              key={pillar.title}
+              className="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-6 shadow-lg shadow-primary/5 transition-transform duration-300 hover:-translate-y-1 hover:border-primary/50"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                <feature.icon className="h-6 w-6 text-primary" />
+              <div className="absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-60" />
+              <div className="flex items-center justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                  <pillar.icon className="h-6 w-6" />
+                </div>
+                <span className="rounded-full bg-secondary/30 px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                  {pillar.tag}
+                </span>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">{pillar.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{pillar.description}</p>
+              </div>
+              <div className="space-y-2">
+                {pillar.bullets.map((bullet) => (
+                  <div key={bullet} className="flex items-start gap-2 text-sm text-foreground">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-primary/80" />
+                    <span className="text-muted-foreground">{bullet}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Platform support */}
-        <div className="mt-20 text-center">
-          <p className="text-sm font-medium text-muted-foreground">Optimized exports for all major platforms</p>
-          <div className="mt-6 flex items-center justify-center gap-8">
-            {platforms.map((platform) => (
+        <div className="mt-16 grid items-center gap-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-6 sm:grid-cols-[1.2fr,1fr] sm:px-8">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-primary">Optimisé par plateforme</p>
+            <h3 className="text-2xl font-semibold">Safe zones, ratios et textes adaptés automatiquement.</h3>
+            <p className="text-sm text-muted-foreground">
+              Un clic pour décliner votre visuel pour IG, TikTok, LinkedIn et X. On ajuste la typographie, le recadrage et la durée motion pour rester lisible.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
+            {[Instagram, Facebook, Linkedin, Twitter, Layout, Smartphone, Wand2].map((Icon, idx) => (
               <div
-                key={platform.name}
-                className="flex flex-col items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                key={idx}
+                className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border/60 bg-card/80 text-foreground/70 transition hover:border-primary/50 hover:text-primary"
               >
-                <platform.icon className="h-8 w-8" />
-                <span className="text-xs font-medium">{platform.name}</span>
+                <Icon className="h-6 w-6" />
               </div>
             ))}
           </div>

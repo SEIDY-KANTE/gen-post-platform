@@ -126,6 +126,20 @@ export default function CreditsPage() {
     },
   ]
 
+  const getPlanCreditsMax = (plan: string) => {
+    switch (plan) {
+      case "pro":
+        return 150
+      case "premium":
+        return 60
+      default:
+        return 10
+    }
+  }
+
+  const creditsMax = getPlanCreditsMax(user?.plan || "free")
+  const creditsPercent = creditsMax ? Math.min(100, ((user?.credits || 0) / creditsMax) * 100) : 0
+
   return (
     <div className="min-h-screen">
       <DashboardHeader
@@ -135,18 +149,37 @@ export default function CreditsPage() {
 
       <div className="p-4 space-y-8 max-w-6xl mx-auto md:p-6">
         {/* Current Credits */}
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <h3 className="text-lg font-semibold">Current Credits</h3>
+        <Card className="overflow-hidden border-border/70 bg-card/80 shadow-sm">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold">Vos crédits</h3>
               <p className="text-sm text-muted-foreground">
-                You have {user?.credits || 0} credits remaining
+                {user?.credits || 0} restants • Plan {user?.plan || "free"}
+              </p>
+              <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${creditsPercent}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Rechargez avant d&apos;atteindre 0 pour éviter les interruptions.
               </p>
             </div>
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <span className="text-2xl font-bold text-primary">
-                {user?.credits || 0}
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <span className="text-2xl font-bold text-primary">
+                  {user?.credits || 0}
+                </span>
+              </div>
+              <div className="hidden sm:flex flex-col gap-2">
+                <Button size="sm" className="rounded-full" onClick={() => handlePurchase("credits_20")}>
+                  Acheter des crédits
+                </Button>
+                <Button size="sm" variant="ghost" className="rounded-full" onClick={() => handlePurchase("pro")}>
+                  Passer en Pro
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
