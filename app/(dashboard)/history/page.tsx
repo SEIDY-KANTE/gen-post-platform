@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
+import { ShareButtons } from "@/components/studio/share-buttons"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,7 +28,7 @@ import {
 import { useAppStore, type GeneratedPost } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { templates, type PlatformKey } from "@/lib/templates"
-import { Sparkles, Download, Trash2, Eye, Calendar, Layout } from "lucide-react"
+import { Sparkles, Download, Trash2, Eye, Calendar, Layout, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -37,11 +38,13 @@ export default function HistoryPage() {
   const [viewingPost, setViewingPost] = useState<GeneratedPost | null>(null)
   const [deletingPost, setDeletingPost] = useState<GeneratedPost | null>(null)
   const [exportTrigger, setExportTrigger] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Fetch posts on mount
   useEffect(() => {
     if (user?.id) {
-      fetchPosts(user.id)
+      setIsLoading(true)
+      fetchPosts(user.id).finally(() => setIsLoading(false))
     }
   }, [user?.id, fetchPosts])
 
@@ -49,17 +52,20 @@ export default function HistoryPage() {
     setExportTrigger((t) => t + 1)
   }
 
-  const handleExportCallback = (dataUrl: string) => {
+  const handleExportCallback = useCallback((dataUrl: string) => {
     if (!viewingPost) return
     const link = document.createElement("a")
     link.download = `genpost-${viewingPost.platform}-${Date.now()}.png`
     link.href = dataUrl
     link.click()
     toast.success("Post exported successfully!")
-  }
+  }, [viewingPost])
 
   const handleDelete = async () => {
-    if (!deletingPost) return
+    if (!deletingPost || !deletingPost.id) {
+      toast.error("Invalid post selected")
+      return
+    }
 
     try {
       // Call API to delete from database
@@ -68,7 +74,13 @@ export default function HistoryPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete post')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Delete failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
+        throw new Error(errorData.error || 'Failed to delete post')
       }
 
       // Update local state
@@ -77,7 +89,7 @@ export default function HistoryPage() {
       setDeletingPost(null)
     } catch (error) {
       console.error('Delete error:', error)
-      toast.error("Failed to delete post")
+      toast.error(error instanceof Error ? error.message : "Failed to delete post")
     }
   }
 
@@ -96,8 +108,15 @@ export default function HistoryPage() {
     <div className="min-h-screen">
       <DashboardHeader title="History" description="View all your generated posts" />
 
-      <div className="p-6 max-w-6xl mx-auto">
-        {posts.length === 0 ? (
+      <div className="p-4 max-w-6xl mx-auto md:p-6">
+        {isLoading ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="mt-4 text-muted-foreground">Loading your posts...</p>
+            </CardContent>
+          </Card>
+        ) : posts.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -225,6 +244,18 @@ export default function HistoryPage() {
             )}
           </div>
 
+          {/* Share Buttons */}
+          {viewingPost?.thumbnail && (
+            <div className="px-6 pb-4">
+              <ShareButtons
+                imageDataUrl={viewingPost.thumbnail}
+                content={viewingPost.content}
+                platform={viewingPost.platform}
+                onDownload={handleExportClick}
+              />
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingPost(null)}>
               Close
@@ -251,7 +282,7 @@ export default function HistoryPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

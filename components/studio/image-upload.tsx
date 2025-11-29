@@ -16,16 +16,17 @@ import { Upload, Sparkles, ImageIcon, X, Loader2, Crown } from "lucide-react"
 interface ImageUploadProps {
   onImageSelect: (imageUrl: string | null) => void
   currentImage: string | null
+  isPro?: boolean
 }
 
-export function ImageUpload({ onImageSelect, currentImage }: ImageUploadProps) {
+export function ImageUpload({ onImageSelect, currentImage, isPro = false }: ImageUploadProps) {
   const { user } = useAppStore()
   const [isOpen, setIsOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const isPro = user?.plan === "pro" || user?.plan === "enterprise"
+  const hasProAccess = isPro || user?.plan === "pro"
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -75,7 +76,7 @@ export function ImageUpload({ onImageSelect, currentImage }: ImageUploadProps) {
     toast.info("Background image removed")
   }
 
-  if (!isPro) {
+  if (!hasProAccess) {
     return (
       <div className="rounded-lg border border-dashed border-muted-foreground/25 p-4">
         <div className="flex flex-col items-center gap-3 text-center">

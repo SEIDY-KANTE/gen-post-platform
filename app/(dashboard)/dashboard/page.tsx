@@ -75,7 +75,7 @@ export default function DashboardPage() {
         description="Create stunning social media posts with AI"
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-6 md:p-6">
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {stats.map((stat) => (

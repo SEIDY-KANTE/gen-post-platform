@@ -71,9 +71,33 @@ STRIPE_PRICE_PRO=your_stripe_price_pro
 
 # App
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Cloudflare Turnstile (Contact Form Anti-spam)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key
+TURNSTILE_SECRET_KEY=your_turnstile_secret_key
+
+# Brevo (Contact Form Email)
+BREVO_API_KEY=your_brevo_api_key
+CONTACT_RECEIVER=your_email@domain.com
 ```
 
-4. Set up Supabase:
+4. Set up Contact Form services:
+
+**Cloudflare Turnstile (Free):**
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+   - Navigate to Turnstile
+   - Create a new site
+   - Copy Site Key to `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+   - Copy Secret Key to `TURNSTILE_SECRET_KEY`
+
+**Brevo Email Service (Free tier: 300 emails/day):**
+   - Sign up at [Brevo](https://www.brevo.com/)
+   - Go to Settings → API Keys
+   - Create a new API key
+   - Copy API key to `BREVO_API_KEY`
+   - Set `CONTACT_RECEIVER` to your support email
+
+5. Set up Supabase:
    - Create a new project at [app.supabase.com](https://app.supabase.com)
    - Run the SQL schema in `lib/supabase/schema.sql`
    - Configure Google OAuth in Authentication → Providers

@@ -3,14 +3,17 @@
 import type React from "react"
 
 import { useState } from "react"
+import Script from "next/script"
+import axios from "axios"
 import Link from "next/link"
-import { ArrowLeft, Sparkles, Mail, MessageSquare, FileQuestion, Send, CheckCircle } from "lucide-react"
+import { ArrowLeft, Sparkles, Mail, MessageSquare, FileQuestion, Send, CheckCircle, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const faqs = [
   {
@@ -47,6 +50,8 @@ const faqs = [
 
 export default function SupportPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -54,14 +59,66 @@ export default function SupportPage() {
     message: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock submission
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setFormData({ name: "", email: "", subject: "", message: "" })
-    }, 3000)
+    setError("")
+    setIsSubmitting(true)
+
+    // Get Turnstile response token
+    const turnstileResponse = (window as any).turnstile?.getResponse()
+    if (!turnstileResponse) {
+      setError("Please complete the security verification")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.message) {
+      setError("Please fill in all required fields")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address")
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const res = await axios.post("/api/contact", {
+        ...formData,
+        "cf-turnstile-response": turnstileResponse,
+      })
+
+      if (res.data.success) {
+        setSubmitted(true)
+        setFormData({ name: "", email: "", subject: "", message: "" })
+          // Reset Turnstile widget
+          ; (window as any).turnstile?.reset()
+
+        // Reset form after 5 seconds
+        setTimeout(() => {
+          setSubmitted(false)
+        }, 5000)
+      } else {
+        setError(res.data.error || "Failed to send message. Please try again.")
+      }
+    } catch (err: any) {
+      console.error("Contact form error:", err)
+      setError(err.response?.data?.error || "Server error. Please try again later.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -151,24 +208,32 @@ export default function SupportPage() {
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">
+                          Name <span className="text-red-500">*</span>
+                        </Label>
                         <Input
                           id="name"
+                          name="name"
                           placeholder="Your name"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          onChange={handleChange}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">
+                          Email <span className="text-red-500">*</span>
+                        </Label>
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="you@example.com"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={handleChange}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     </div>
@@ -176,26 +241,58 @@ export default function SupportPage() {
                       <Label htmlFor="subject">Subject</Label>
                       <Input
                         id="subject"
+                        name="subject"
                         placeholder="How can we help?"
                         value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="message">Message</Label>
+                      <Label htmlFor="message">
+                        Message <span className="text-red-500">*</span>
+                      </Label>
                       <Textarea
                         id="message"
+                        name="message"
                         placeholder="Describe your issue or question..."
                         rows={5}
                         value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        onChange={handleChange}
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
-                    <Button type="submit" className="w-full">
-                      <Send className="mr-2 h-4 w-4" />
-                      Send Message
+
+                    {/* Cloudflare Turnstile */}
+                    <div className="flex justify-center">
+                      <div
+                        className="cf-turnstile"
+                        data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                        data-theme="light"
+                      ></div>
+                    </div>
+
+                    {/* Error Message */}
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Send Message
+                        </>
+                      )}
                     </Button>
                   </form>
                 )}
@@ -204,6 +301,9 @@ export default function SupportPage() {
           </div>
         </div>
       </main>
+
+      {/* Load Cloudflare Turnstile Script */}
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
     </div>
   )
 }

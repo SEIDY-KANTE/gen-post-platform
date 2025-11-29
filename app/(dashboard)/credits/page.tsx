@@ -113,13 +113,13 @@ export default function CreditsPage() {
       ...STRIPE_PRODUCTS.pro,
       icon: Crown,
       features: [
-       "150 AI generations/month",
-       "All templates + exclusive",
-       "4K export quality",
-       "Custom backgrounds",
-       "AI image generation",
-       "Background image upload",
-       "Priority support",
+        "150 AI generations/month",
+        "All templates + exclusive",
+        "4K export quality",
+        "Custom backgrounds",
+        "AI image generation",
+        "Background image upload",
+        "Priority support",
       ],
       currentPlan: user?.plan === "pro",
       popular: false,
@@ -133,7 +133,7 @@ export default function CreditsPage() {
         description="Purchase credits or upgrade to a subscription plan"
       />
 
-      <div className="p-6 space-y-8 max-w-6xl mx-auto">
+      <div className="p-4 space-y-8 max-w-6xl mx-auto md:p-6">
         {/* Current Credits */}
         <Card>
           <CardContent className="flex items-center justify-between p-6">

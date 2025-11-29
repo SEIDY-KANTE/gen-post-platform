@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import Script from "next/script"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,12 +16,59 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import { useAppStore } from "@/lib/store"
 import { toast } from "sonner"
 
+
+// Turnstile Widget Component to handle dynamic rendering
+function TurnstileWidget({ onVerify }: { onVerify: (token: string) => void }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [widgetId, setWidgetId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!containerRef.current || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) return
+
+    // Function to render widget
+    const renderWidget = () => {
+      if ((window as any).turnstile && containerRef.current && !widgetId) {
+        try {
+          // Clear container first just in case
+          containerRef.current.innerHTML = ''
+
+          const id = (window as any).turnstile.render(containerRef.current, {
+            sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+            theme: 'light',
+            callback: (token: string) => onVerify(token),
+          })
+          setWidgetId(id)
+        } catch (e) {
+          console.error('Turnstile render error:', e)
+        }
+      } else if (!(window as any).turnstile) {
+        // Retry if script not loaded yet
+        setTimeout(renderWidget, 100)
+      }
+    }
+
+    renderWidget()
+
+    return () => {
+      // Cleanup if needed
+      if (widgetId && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(widgetId)
+        } catch (e) {
+          // Ignore removal errors
+        }
+      }
+    }
+  }, [])
+
+  return <div ref={containerRef} className="flex justify-center min-h-[65px]" />
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { signIn, signUp, signInWithGoogle } = useAuth()
   const { fetchUser } = useAppStore()
   const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -64,6 +112,7 @@ export default function LoginPage() {
     }
   }
 
+
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -73,7 +122,16 @@ export default function LoginPage() {
     const password = formData.get("password") as string
 
     try {
-      const { user } = await signUp(email, password, name)
+      // Check Turnstile if configured
+      if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+        if (!turnstileToken) {
+          toast.error("Please complete the security verification")
+          setIsLoading(false)
+          return
+        }
+      }
+
+      const { user } = await signUp(email, password, name, turnstileToken)
 
       // Fetch user data from database to update store
       if (user) {
@@ -106,6 +164,19 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+      // The redirect happens automatically, no need to manually navigate
+    } catch (error: unknown) {
+      console.error('Google sign-in error:', error)
+      toast.error(error instanceof Error ? error.message : "Failed to sign in with Google")
+      setIsGoogleLoading(false)
+    }
+  }
+
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true)
@@ -256,6 +327,12 @@ export default function LoginPage() {
                     />
                   </div>
                 </div>
+
+                {/* Cloudflare Turnstile - only show if configured */}
+                {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                  <TurnstileWidget onVerify={setTurnstileToken} />
+                )}
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
@@ -319,6 +396,9 @@ export default function LoginPage() {
           Privacy Policy
         </Link>
       </p>
+
+      {/* Load Cloudflare Turnstile Script */}
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
     </div>
   )
 }

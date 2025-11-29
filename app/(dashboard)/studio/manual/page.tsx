@@ -31,8 +31,11 @@ import {
   Crown,
   ImageIcon,
   Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import { ExportDialog } from "@/components/studio/export-dialog"
+import { ShareButtons } from "@/components/studio/share-buttons"
 
 export default function ManualStudioPage() {
   const { addPost, user } = useAppStore()
@@ -67,46 +70,51 @@ export default function ManualStudioPage() {
   // Export
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showPreview, setShowPreview] = useState(true) // Mobile preview toggle
 
   const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
   const canUseImages = user?.plan === "pro"
 
   const handleExport = useCallback(
-    (dataUrl: string) => {
+    async (dataUrl: string) => {
+      // Download the image first
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
 
-      addPost({
-        id: Date.now().toString(),
-        title: content.substring(0, 30) + "...",
-        content,
-        template: "custom",
-        platform,
-        createdAt: new Date(),
-        thumbnail: dataUrl,
-        author,
-        gradient:
-          backgroundType === "gradient"
-            ? gradient
-            : backgroundType === "custom"
-              ? `linear-gradient(${customGradient.angle}deg, ${customGradient.color1} 0%, ${customGradient.color2} 100%)`
-              : undefined,
-        backgroundColor: backgroundType === "solid" ? solidColor : undefined,
-        borderColor,
-        borderWidth,
-        textColor,
-        accentColor,
-        fontFamily,
-        fontWeight,
-        fontSize,
-        textAlign,
-        padding,
-        backgroundImage: backgroundImage || undefined,
-      })
-
-      toast.success("Post exported successfully!")
+      // Then save to history and WAIT for completion
+      try {
+        await addPost({
+          title: content.substring(0, 30) + "...",
+          content,
+          template: "custom",
+          platform,
+          thumbnail: dataUrl,
+          author,
+          gradient:
+            backgroundType === "gradient"
+              ? gradient
+              : backgroundType === "custom"
+                ? `linear-gradient(${customGradient.angle}deg, ${customGradient.color1} 0%, ${customGradient.color2} 100%)`
+                : undefined,
+          backgroundColor: backgroundType === "solid" ? solidColor : undefined,
+          borderColor,
+          borderWidth,
+          textColor,
+          accentColor,
+          fontFamily,
+          fontWeight,
+          fontSize,
+          textAlign,
+          padding,
+          backgroundImage: backgroundImage || undefined,
+        })
+        toast.success('Post exported and saved!')
+      } catch (error) {
+        console.error('Failed to save post:', error)
+        toast.error('Post exported but failed to save to history')
+      }
     },
     [
       platform,
@@ -179,7 +187,8 @@ export default function ManualStudioPage() {
     if (exportPlatform !== platform) {
       setPlatform(exportPlatform)
     }
-    setTimeout(() => setExportTrigger((t) => t + 1), 100)
+    // Don't automatically trigger export - user needs to click Export button
+    // setTimeout(() => setExportTrigger((t) => t + 1), 100)
   }
 
   // Compute background for canvas based on type
@@ -195,9 +204,57 @@ export default function ManualStudioPage() {
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <DashboardHeader title="Manual Editor" description="Create your post with full control" />
 
-      <div className="flex flex-1 gap-6 overflow-hidden p-6">
+      <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
+        {/* Mobile Preview Toggle */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPreview(!showPreview)}
+          className="mb-4 w-full gap-2 lg:hidden"
+        >
+          {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPreview ? 'Hide' : 'Show'} Preview
+        </Button>
+
+        {/* Mobile Preview (Sticky Top) */}
+        {showPreview && (
+          <div className="mb-4 lg:hidden">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Live Preview</CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    {platformSizes[platform].width} x {platformSizes[platform].height}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center p-2">
+                <PreviewCanvas
+                  platform={platform}
+                  content={content}
+                  author={author}
+                  gradient={canvasGradient}
+                  backgroundColor={canvasBackgroundColor}
+                  borderColor={borderColor}
+                  borderWidth={borderWidth}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  padding={padding}
+                  backgroundImage={backgroundImage || undefined}
+                  maxHeight="35vh"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+
         {/* Left Panel - Controls (Scrollable) */}
-        <ScrollArea className="w-full lg:w-96">
+        <ScrollArea className="flex-1 w-full min-h-0 lg:flex-none lg:w-96">
           <div className="space-y-4 pr-4">
             {/* Quick Actions */}
             <div className="flex gap-2">
@@ -278,9 +335,8 @@ export default function ManualStudioPage() {
                         <button
                           key={preset.id}
                           onClick={() => setGradient(preset.value)}
-                          className={`aspect-square rounded-lg transition-all ${
-                            gradient === preset.value ? "ring-2 ring-primary ring-offset-2" : ""
-                          }`}
+                          className={`aspect-square rounded-lg transition-all ${gradient === preset.value ? "ring-2 ring-primary ring-offset-2" : ""
+                            }`}
                           style={{ background: preset.value }}
                           title={preset.name}
                         />
@@ -294,9 +350,8 @@ export default function ManualStudioPage() {
                         <button
                           key={color.id}
                           onClick={() => setSolidColor(color.value)}
-                          className={`aspect-square rounded-lg border transition-all ${
-                            solidColor === color.value ? "ring-2 ring-primary ring-offset-2" : ""
-                          }`}
+                          className={`aspect-square rounded-lg border transition-all ${solidColor === color.value ? "ring-2 ring-primary ring-offset-2" : ""
+                            }`}
                           style={{ background: color.value }}
                         />
                       ))}
@@ -533,7 +588,7 @@ export default function ManualStudioPage() {
               </CardHeader>
               <CardContent>
                 {canUseImages ? (
-                  <ImageUpload value={backgroundImage} onChange={setBackgroundImage} isPro={true} />
+                  <ImageUpload currentImage={backgroundImage} onImageSelect={setBackgroundImage} isPro={true} />
                 ) : (
                   <div className="text-center py-6 rounded-lg border border-dashed">
                     <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
@@ -582,20 +637,29 @@ export default function ManualStudioPage() {
               </CardContent>
             </Card>
 
-            {/* Export Button */}
-            <div className="flex gap-2">
-              <Button onClick={() => setExportTrigger((t) => t + 1)} className="flex-1 gap-2" size="lg">
-                <Download className="h-4 w-4" />
-                Quick Export
-              </Button>
-              <Button onClick={() => setShowExportDialog(true)} variant="outline" size="lg">
-                Options
-              </Button>
-            </div>
+            {/* Export & Share */}
+            <Card>
+              <CardContent className="space-y-4 p-4">
+                <div className="flex gap-2">
+                  <Button onClick={() => setExportTrigger((t) => t + 1)} className="flex-1 gap-2" size="lg">
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                  <Button onClick={() => setShowExportDialog(true)} variant="outline" size="lg">
+                    Options
+                  </Button>
+                </div>
+                <ShareButtons
+                  imageDataUrl=""
+                  content={content}
+                  platform={platform}
+                />
+              </CardContent>
+            </Card>
           </div>
         </ScrollArea>
 
-        {/* Right Panel - Preview (Sticky) */}
+        {/* Desktop Preview (Right Panel - Always Visible) */}
         <div className="hidden flex-1 lg:block">
           <Card className="sticky top-6 h-full">
             <CardHeader>

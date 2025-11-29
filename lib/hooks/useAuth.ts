@@ -27,7 +27,26 @@ export function useAuth() {
     return {
         user,
         loading,
-        signUp: async (email: string, password: string, name?: string) => {
+        signUp: async (email: string, password: string, name?: string, turnstileToken?: string) => {
+            // Verify Turnstile token if provided
+            if (turnstileToken) {
+                try {
+                    const verifyRes = await fetch('/api/verify-turnstile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: turnstileToken }),
+                    })
+
+                    const verifyData = await verifyRes.json()
+                    if (!verifyData.success) {
+                        throw new Error('Security verification failed. Please try again.')
+                    }
+                } catch (error) {
+                    console.error('Turnstile verification error:', error)
+                    throw new Error('Security verification failed. Please refresh and try again.')
+                }
+            }
+
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -42,15 +61,16 @@ export function useAuth() {
 
             // Create user profile in database (Supabase Auth automatically creates the user)
             // The auth.users table is separate from our custom users table
+            // We use upsert here because a trigger might have already created the user
             if (data.user) {
-                const { error: insertError } = await supabase.from('users').insert({
+                const { error: insertError } = await supabase.from('users').upsert({
                     id: data.user.id,
                     email: data.user.email!,
                     name: name || email.split('@')[0],
                 })
 
                 if (insertError) {
-                    console.error('Error creating user profile:', insertError)
+                    console.error('Error creating/updating user profile:', insertError)
                     // Don't throw here - auth user is created, profile can be created later
                 }
             }

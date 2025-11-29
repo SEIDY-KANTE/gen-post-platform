@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createClient()
@@ -22,7 +22,7 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { id } = params
+        const { id } = await params
 
         // Fetch post (RLS ensures user can only access their own posts)
         const { data: post, error } = await supabase
@@ -59,7 +59,7 @@ export async function GET(
  */
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createClient()
@@ -74,7 +74,13 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { id } = params
+        const { id } = await params
+
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        if (!id || !uuidRegex.test(id)) {
+            return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 })
+        }
 
         // Delete post (RLS ensures user can only delete their own posts)
         const { error } = await supabase

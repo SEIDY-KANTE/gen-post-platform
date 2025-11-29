@@ -22,6 +22,7 @@ interface PreviewCanvasProps {
   backgroundImage?: string
   onExport?: (dataUrl: string) => void
   exportTrigger?: number
+  maxHeight?: string
 }
 
 const FONT_URLS: Record<string, string> = {
@@ -230,11 +231,12 @@ export function PreviewCanvas({
   backgroundImage,
   onExport,
   exportTrigger,
+  maxHeight = "70vh",
 }: PreviewCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [fontLoaded, setFontLoaded] = useState(false)
-  const prevExportTrigger = useRef(0)
+  const prevExportTrigger = useRef(exportTrigger || 0)
 
   const { width, height } = platformSizes[platform]
   const aspectRatio = width / height
@@ -404,15 +406,21 @@ export function PreviewCanvas({
   }, [fontLoaded, drawCanvas])
 
   useEffect(() => {
-    if (exportTrigger && exportTrigger > prevExportTrigger.current && canvasRef.current && onExport) {
-      prevExportTrigger.current = exportTrigger
+    // Only export if trigger increased AND we haven't exported this trigger value yet
+    const trigger = exportTrigger || 0
+    if (trigger > 0 && trigger > prevExportTrigger.current && canvasRef.current && onExport) {
+      prevExportTrigger.current = trigger
+
       // Wait a bit for canvas to be fully rendered
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (canvasRef.current) {
           const dataUrl = canvasRef.current.toDataURL("image/png")
+          // Call the callback for saving to history
           onExport(dataUrl)
         }
       }, 100)
+
+      return () => clearTimeout(timer)
     }
   }, [exportTrigger, onExport])
 
@@ -422,7 +430,7 @@ export function PreviewCanvas({
         ref={canvasRef}
         style={{
           maxWidth: "100%",
-          maxHeight: "70vh",
+          maxHeight: maxHeight,
           width: aspectRatio > 1 ? "100%" : "auto",
           height: aspectRatio <= 1 ? "100%" : "auto",
           borderRadius: "0.5rem",

@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Coins,
+  MessageSquare,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -29,6 +30,7 @@ const navigation = [
   { name: "History", href: "/history", icon: History },
   { name: "Credits", href: "/credits", icon: CreditCard },
   { name: "Profile", href: "/profile", icon: User },
+  { name: "Support", href: "/support", icon: MessageSquare },
 ]
 
 export function Sidebar() {
@@ -49,7 +51,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-card transition-all duration-300",
+        "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-card transition-all duration-300 md:flex",
         collapsed ? "w-16" : "w-64",
       )}
     >
