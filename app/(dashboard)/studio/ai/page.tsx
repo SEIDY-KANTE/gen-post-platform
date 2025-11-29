@@ -47,6 +47,7 @@ export default function AIStudioPage() {
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">(templates[0].textAlign)
   const [padding, setPadding] = useState(templates[0].padding)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>("")
   const [exportTrigger, setExportTrigger] = useState(0)
   const [showCreditsModal, setShowCreditsModal] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
@@ -238,6 +239,17 @@ export default function AIStudioPage() {
       }
     }
   }, [])
+
+  const downloadPreview = useCallback(() => {
+    if (!previewImageUrl) {
+      toast.error("Preview not ready yet. Please try again.")
+      return
+    }
+    const link = document.createElement("a")
+    link.download = `genpost-${platform}-${Date.now()}.png`
+    link.href = previewImageUrl
+    link.click()
+  }, [platform, previewImageUrl])
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => {
@@ -584,9 +596,10 @@ export default function AIStudioPage() {
                   </Button>
                 </div>
                 <ShareButtons
-                  imageDataUrl=""
+                  imageDataUrl={previewImageUrl}
                   content={content}
                   platform={platform}
+                  onDownload={downloadPreview}
                 />
               </CardContent>
             </Card>
@@ -595,37 +608,72 @@ export default function AIStudioPage() {
 
         {/* Desktop Preview (Right Panel - Always Visible) */}
         <div className="hidden flex-1 lg:block">
-          <Card className="sticky top-6 h-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
-                <Badge variant="outline">
-                  {platformSizes[platform].width} x {platformSizes[platform].height}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="flex h-[calc(100%-4rem)] items-center justify-center p-8">
-              <PreviewCanvas
-                platform={platform}
-                content={content}
-                author={author}
-                gradient={backgroundType === "gradient" ? gradient : undefined}
-                backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
-                borderColor={borderColor}
-                borderWidth={borderWidth}
-                textColor={textColor}
-                accentColor={accentColor}
-                fontFamily={fontFamily}
-                fontWeight={fontWeight}
-                fontSize={fontSize}
-                textAlign={textAlign}
-                padding={padding}
-                backgroundImage={backgroundImage || undefined}
-                onExport={handleExport}
-                exportTrigger={exportTrigger}
-              />
-            </CardContent>
-          </Card>
+          <div className="sticky top-6 space-y-4">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
+                  <Badge variant="outline">
+                    {platformSizes[platform].width} x {platformSizes[platform].height}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex h-[calc(100%-4rem)] items-center justify-center p-8">
+                <PreviewCanvas
+                  platform={platform}
+                  content={content}
+                  author={author}
+                  gradient={backgroundType === "gradient" ? gradient : undefined}
+                  backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                  borderColor={borderColor}
+                  borderWidth={borderWidth}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  padding={padding}
+                  backgroundImage={backgroundImage || undefined}
+                  onRender={setPreviewImageUrl}
+                  onExport={handleExport}
+                  exportTrigger={exportTrigger}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Multi-preview</CardTitle>
+                <p className="text-xs text-muted-foreground">Vérifiez rapidement le cadrage en 9:16, 1:1 et Story.</p>
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 gap-3">
+                {["tiktok", "instagram-square", "instagram-story"].map((p) => (
+                  <div key={p} className="rounded-lg border border-border/70 bg-card/60 p-2 text-center text-xs">
+                    <p className="mb-2 font-semibold">{platformSizes[p as PlatformKey].label}</p>
+                    <PreviewCanvas
+                      platform={p as PlatformKey}
+                      content={content}
+                      author={author}
+                      gradient={backgroundType === "gradient" ? gradient : undefined}
+                      backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                      borderColor={borderColor}
+                      borderWidth={borderWidth}
+                      textColor={textColor}
+                      accentColor={accentColor}
+                      fontFamily={fontFamily}
+                      fontWeight={fontWeight}
+                      fontSize={fontSize}
+                      textAlign={textAlign}
+                      padding={padding}
+                      backgroundImage={backgroundImage || undefined}
+                      maxHeight="200px"
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 

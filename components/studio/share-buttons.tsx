@@ -13,9 +13,17 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ imageDataUrl, content, platform, onDownload }: ShareButtonsProps) {
     const canShare = typeof navigator !== 'undefined' && navigator.share
+    const ensureImage = () => {
+        if (!imageDataUrl) {
+            toast.error("Preview not ready yet. Please try again.")
+            return false
+        }
+        return true
+    }
 
     // Download image helper
     const downloadImage = () => {
+        if (!ensureImage()) return
         if (onDownload) {
             onDownload()
         } else {
@@ -28,6 +36,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     }
 
     const shareToWhatsApp = async () => {
+        if (!ensureImage()) return
         // WhatsApp works great with Web Share API on mobile
         if (canShare) {
             try {
@@ -58,6 +67,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     }
 
     const shareToFacebook = () => {
+        if (!ensureImage()) return
         // Facebook doesn't support image upload via Web Share API reliably
         // Just download and open Facebook
         downloadImage()
@@ -67,6 +77,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     }
 
     const shareToLinkedIn = () => {
+        if (!ensureImage()) return
         // LinkedIn doesn't support image upload via Web Share API
         // Just download and open LinkedIn
         downloadImage()
@@ -76,6 +87,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     }
 
     const shareToTwitter = () => {
+        if (!ensureImage()) return
         // Twitter doesn't support image upload via Web Share API
         // Just download and open Twitter
         downloadImage()
@@ -85,6 +97,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     }
 
     const shareViaWebShare = async () => {
+        if (!ensureImage()) return
         if (!canShare) {
             downloadImage()
             toast.info("Download complete! Share from your device.")
