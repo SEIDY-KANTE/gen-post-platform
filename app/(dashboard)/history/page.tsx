@@ -49,17 +49,20 @@ export default function HistoryPage() {
     setExportTrigger((t) => t + 1)
   }
 
-  const handleExportCallback = (dataUrl: string) => {
+  const handleExportCallback = useCallback((dataUrl: string) => {
     if (!viewingPost) return
     const link = document.createElement("a")
     link.download = `genpost-${viewingPost.platform}-${Date.now()}.png`
     link.href = dataUrl
     link.click()
     toast.success("Post exported successfully!")
-  }
+  }, [viewingPost])
 
   const handleDelete = async () => {
-    if (!deletingPost) return
+    if (!deletingPost || !deletingPost.id) {
+      toast.error("Invalid post selected")
+      return
+    }
 
     try {
       // Call API to delete from database

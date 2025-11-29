@@ -236,7 +236,7 @@ export function PreviewCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [fontLoaded, setFontLoaded] = useState(false)
-  const prevExportTrigger = useRef(0)
+  const prevExportTrigger = useRef(exportTrigger || 0)
 
   const { width, height } = platformSizes[platform]
   const aspectRatio = width / height

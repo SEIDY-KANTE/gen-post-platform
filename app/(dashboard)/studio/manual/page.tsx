@@ -82,7 +82,7 @@ export default function ManualStudioPage() {
       link.href = dataUrl
       link.click()
 
-      addPost({
+      const savePromise = addPost({
         id: Date.now().toString(),
         title: content.substring(0, 30) + "...",
         content,
@@ -110,7 +110,11 @@ export default function ManualStudioPage() {
         backgroundImage: backgroundImage || undefined,
       })
 
-      toast.success("Post exported successfully!")
+      toast.promise(savePromise, {
+        loading: 'Saving to history...',
+        success: 'Post saved to history!',
+        error: 'Exported, but failed to save to history',
+      })
     },
     [
       platform,

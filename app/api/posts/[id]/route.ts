@@ -76,6 +76,12 @@ export async function DELETE(
 
         const { id } = params
 
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        if (!id || !uuidRegex.test(id)) {
+            return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 })
+        }
+
         // Delete post (RLS ensures user can only delete their own posts)
         const { error } = await supabase
             .from('posts')
