@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { PreviewCanvas } from "@/components/studio/preview-canvas"
+import { ShareButtons } from "@/components/studio/share-buttons"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -242,6 +243,18 @@ export default function HistoryPage() {
               />
             )}
           </div>
+
+          {/* Share Buttons */}
+          {viewingPost?.thumbnail && (
+            <div className="px-6 pb-4">
+              <ShareButtons
+                imageDataUrl={viewingPost.thumbnail}
+                content={viewingPost.content}
+                platform={viewingPost.platform}
+                onDownload={handleExportClick}
+              />
+            </div>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingPost(null)}>

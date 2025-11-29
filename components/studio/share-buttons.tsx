@@ -14,12 +14,23 @@ interface ShareButtonsProps {
 export function ShareButtons({ imageDataUrl, content, platform, onDownload }: ShareButtonsProps) {
     const canShare = typeof navigator !== 'undefined' && navigator.share
 
+    // Download image helper
+    const downloadImage = () => {
+        if (onDownload) {
+            onDownload()
+        } else {
+            // Fallback: create download link
+            const link = document.createElement("a")
+            link.download = `genpost-${platform}-${Date.now()}.png`
+            link.href = imageDataUrl
+            link.click()
+        }
+    }
+
     const shareToInstagram = async () => {
         // Instagram doesn't support direct web sharing
         // Download image and copy caption to clipboard
-        if (onDownload) {
-            onDownload()
-        }
+        downloadImage()
 
         try {
             await navigator.clipboard.writeText(content)
@@ -29,12 +40,99 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
         }
     }
 
-    const shareViaWebShare = async (platformName: string) => {
-        if (!canShare) {
-            if (onDownload) {
-                onDownload()
+    const shareToFacebook = async () => {
+        // Try Web Share API first (works on mobile with native apps)
+        if (canShare) {
+            try {
+                const response = await fetch(imageDataUrl)
+                const blob = await response.blob()
+                const file = new File([blob], `genpost-${platform}.png`, { type: 'image/png' })
+
+                await navigator.share({
+                    files: [file],
+                    text: content,
+                })
+
+                toast.success("Shared successfully!")
+                return
+            } catch (error) {
+                // If user cancels, just return
+                if ((error as Error).name === 'AbortError') {
+                    return
+                }
+                // Otherwise fallback to download + redirect
             }
-            toast.info(`Download complete! Open ${platformName} to share.`)
+        }
+
+        // Fallback: Download image and open Facebook
+        downloadImage()
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(content)}`
+        window.open(facebookUrl, '_blank', 'width=600,height=400')
+        toast.info("Image downloaded! Upload it to your Facebook post.")
+    }
+
+    const shareToLinkedIn = async () => {
+        // Try Web Share API first (works on mobile with native apps)
+        if (canShare) {
+            try {
+                const response = await fetch(imageDataUrl)
+                const blob = await response.blob()
+                const file = new File([blob], `genpost-${platform}.png`, { type: 'image/png' })
+
+                await navigator.share({
+                    files: [file],
+                    text: content,
+                })
+
+                toast.success("Shared successfully!")
+                return
+            } catch (error) {
+                if ((error as Error).name === 'AbortError') {
+                    return
+                }
+            }
+        }
+
+        // Fallback: Download image and open LinkedIn
+        downloadImage()
+        const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
+        window.open(linkedInUrl, '_blank', 'width=600,height=600')
+        toast.info("Image downloaded! Add it to your LinkedIn post.")
+    }
+
+    const shareToTwitter = async () => {
+        // Try Web Share API first (works on mobile with native apps)
+        if (canShare) {
+            try {
+                const response = await fetch(imageDataUrl)
+                const blob = await response.blob()
+                const file = new File([blob], `genpost-${platform}.png`, { type: 'image/png' })
+
+                await navigator.share({
+                    files: [file],
+                    text: content,
+                })
+
+                toast.success("Shared successfully!")
+                return
+            } catch (error) {
+                if ((error as Error).name === 'AbortError') {
+                    return
+                }
+            }
+        }
+
+        // Fallback: Download image and open Twitter
+        downloadImage()
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(content)}`
+        window.open(twitterUrl, '_blank', 'width=600,height=400')
+        toast.info("Image downloaded! Attach it to your tweet.")
+    }
+
+    const shareViaWebShare = async () => {
+        if (!canShare) {
+            downloadImage()
+            toast.info("Download complete! Open your preferred app to share.")
             return
         }
 
@@ -50,14 +148,12 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                 text: content,
             })
 
-            toast.success(`Shared to ${platformName}!`)
+            toast.success("Shared successfully!")
         } catch (error) {
             // User cancelled or error occurred
             if ((error as Error).name !== 'AbortError') {
-                if (onDownload) {
-                    onDownload()
-                }
-                toast.info(`Download complete! Open ${platformName} to share.`)
+                downloadImage()
+                toast.info("Download complete! Open your preferred app to share.")
             }
         }
     }
@@ -88,7 +184,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => shareViaWebShare('LinkedIn')}
+                    onClick={shareToLinkedIn}
                     className="gap-2"
                 >
                     <Linkedin className="h-4 w-4" />
@@ -98,7 +194,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => shareViaWebShare('Twitter')}
+                    onClick={shareToTwitter}
                     className="gap-2"
                 >
                     <Twitter className="h-4 w-4" />
@@ -108,7 +204,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => shareViaWebShare('Facebook')}
+                    onClick={shareToFacebook}
                     className="gap-2"
                 >
                     <Facebook className="h-4 w-4" />
@@ -129,7 +225,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => shareViaWebShare('Other')}
+                        onClick={shareViaWebShare}
                         className="gap-2"
                     >
                         <Share2 className="h-4 w-4" />
