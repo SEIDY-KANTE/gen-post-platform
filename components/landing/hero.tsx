@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Sparkles, Zap, ImageIcon, Download, ShieldCheck, Clock3, BarChart3 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { useAuth } from "@/lib/hooks/useAuth"
 
 export function HeroSection() {
   const { t } = useI18n()
+  const { user } = useAuth()
+  const primaryHref = user ? "/dashboard" : "/login"
   return (
     <section className="relative overflow-hidden pt-28 pb-24 sm:pt-32 sm:pb-32">
       <div className="absolute inset-0 -z-10">
@@ -37,7 +40,7 @@ export function HeroSection() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href="/login">
+            <Link href={primaryHref}>
               <Button size="lg" className="gap-2 rounded-full px-8">
                 {t("hero.cta.primary", "Lancer un design")}
                 <ArrowRight className="h-4 w-4" />

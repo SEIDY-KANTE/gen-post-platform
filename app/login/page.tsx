@@ -15,6 +15,7 @@ import { Sparkles, Mail, Lock, User } from "lucide-react"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { useAppStore } from "@/lib/store"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 
 // Turnstile Widget Component to handle dynamic rendering
@@ -71,6 +72,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string>("")
+  const { t } = useI18n()
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -87,22 +89,22 @@ export default function LoginPage() {
         await fetchUser(user.id)
       }
 
-      toast.success("Welcome back!")
+      toast.success(t("auth.success.login", "Welcome back!"))
       router.push("/dashboard")
     } catch (error: unknown) {
       console.error('Login error:', error)
 
       // Better error messages
-      let errorMessage = "Login failed. Please try again."
+      let errorMessage = t("auth.errors.loginFailed", "Login failed. Please try again.")
 
       if (error instanceof Error) {
         // Handle common Supabase auth errors
         if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Invalid email or password. Please check and try again."
+          errorMessage = t("auth.errors.invalidCreds", "Invalid email or password. Please check and try again.")
         } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please confirm your email before logging in."
+          errorMessage = t("auth.errors.emailConfirm", "Please confirm your email before logging in.")
         } else if (error.message.includes("User not found")) {
-          errorMessage = "No account found with this email."
+          errorMessage = t("auth.errors.userNotFound", "No account found with this email.")
         } else {
           errorMessage = error.message
         }
@@ -127,7 +129,7 @@ export default function LoginPage() {
       // Check Turnstile if configured
       if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
         if (!turnstileToken) {
-          toast.error("Please complete the security verification")
+          toast.error(t("auth.turnstile", "Please complete the security verification"))
           setIsLoading(false)
           return
         }
@@ -140,22 +142,22 @@ export default function LoginPage() {
         await fetchUser(user.id)
       }
 
-      toast.success("Account created! You received 5 free credits.")
+      toast.success(t("auth.success.signup", "Account created! You received 5 free credits."))
       router.push("/dashboard")
     } catch (error: unknown) {
       console.error('Signup error:', error)
 
       // Better error messages
-      let errorMessage = "Signup failed. Please try again."
+      let errorMessage = t("auth.errors.signupFailed", "Signup failed. Please try again.")
 
       if (error instanceof Error) {
         // Handle common Supabase auth errors
         if (error.message.includes("User already registered")) {
-          errorMessage = "This email is already registered. Please sign in instead."
+          errorMessage = t("auth.errors.emailRegistered", "This email is already registered. Please sign in instead.")
         } else if (error.message.includes("Password should be at least")) {
-          errorMessage = "Password must be at least 6 characters long."
+          errorMessage = t("auth.errors.passwordWeak", "Password must be at least 6 characters long.")
         } else if (error.message.includes("Invalid email")) {
-          errorMessage = "Please enter a valid email address."
+          errorMessage = t("auth.errors.invalidEmail", "Please enter a valid email address.")
         } else {
           errorMessage = error.message
         }
@@ -175,7 +177,7 @@ export default function LoginPage() {
       // The redirect happens automatically, no need to manually navigate
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
-      toast.error(error instanceof Error ? error.message : "Failed to sign in with Google")
+      toast.error(error instanceof Error ? error.message : t("auth.errors.loginFailed", "Failed to sign in with Google"))
       setIsGoogleLoading(false)
     }
   }
@@ -191,20 +193,20 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to GenPost</CardTitle>
-          <CardDescription>Create stunning social media posts with AI</CardDescription>
+          <CardTitle className="text-2xl">{t("auth.welcome", "Welcome to GenPost")}</CardTitle>
+          <CardDescription>{t("auth.subtitle", "Create stunning social media posts with AI")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="login">{t("auth.signin", "Sign In")}</TabsTrigger>
+              <TabsTrigger value="signup">{t("auth.signup", "Sign Up")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">{t("auth.email", "Email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -218,7 +220,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">{t("auth.password", "Password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -232,7 +234,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign In"}
+                  {isLoading ? t("auth.signingIn", "Signing in...") : t("auth.signin", "Sign In")}
                 </Button>
 
                 <div className="relative my-4">
@@ -240,7 +242,7 @@ export default function LoginPage() {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-card px-2 text-muted-foreground">{t("auth.or", "Or continue with")}</span>
                   </div>
                 </div>
 
@@ -252,7 +254,7 @@ export default function LoginPage() {
                   disabled={isGoogleLoading || isLoading}
                 >
                   {isGoogleLoading ? (
-                    "Connecting..."
+                    t("auth.connecting", "Connecting...")
                   ) : (
                     <>
                       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -273,7 +275,7 @@ export default function LoginPage() {
                           fill="#EA4335"
                         />
                       </svg>
-                      Continue with Google
+                      {t("auth.google", "Continue with Google")}
                     </>
                   )}
                 </Button>
@@ -283,14 +285,14 @@ export default function LoginPage() {
             <TabsContent value="signup" className="mt-6">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Name</Label>
+                  <Label htmlFor="signup-name">{t("auth.name", "Full Name")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input id="signup-name" name="name" type="text" placeholder="John Doe" className="pl-10" required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{t("auth.email", "Email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -304,7 +306,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">{t("auth.password", "Password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -324,16 +326,16 @@ export default function LoginPage() {
                 )}
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {isLoading ? t("auth.creatingAccount", "Creating account...") : t("auth.createAccount", "Create account")}
                 </Button>
-                <p className="text-center text-xs text-muted-foreground">Get 5 free AI credits when you sign up!</p>
+                <p className="text-center text-xs text-muted-foreground">{t("auth.bonus", "Get 5 free AI credits when you sign up!")}</p>
 
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-card px-2 text-muted-foreground">{t("auth.or", "Or continue with")}</span>
                   </div>
                 </div>
 
@@ -345,7 +347,7 @@ export default function LoginPage() {
                   disabled={isGoogleLoading || isLoading}
                 >
                   {isGoogleLoading ? (
-                    "Connecting..."
+                    t("auth.connecting", "Connecting...")
                   ) : (
                     <>
                       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -366,7 +368,7 @@ export default function LoginPage() {
                           fill="#EA4335"
                         />
                       </svg>
-                      Continue with Google
+                      {t("auth.google", "Continue with Google")}
                     </>
                   )}
                 </Button>
@@ -377,13 +379,13 @@ export default function LoginPage() {
       </Card>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        By continuing, you agree to our{" "}
+        {t("auth.terms", "By continuing, you agree to our")}{" "}
         <Link href="/terms" className="underline hover:text-foreground">
-          Terms
+          {t("footer.terms", "Terms")}
         </Link>{" "}
-        and{" "}
+        {t("footer.and", "and")}{" "}
         <Link href="/privacy" className="underline hover:text-foreground">
-          Privacy Policy
+          {t("footer.privacy", "Privacy Policy")}
         </Link>
       </p>
 

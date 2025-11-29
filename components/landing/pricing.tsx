@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
+import { useAuth } from "@/lib/hooks/useAuth"
 
 const plans = [
   {
@@ -24,7 +25,7 @@ const plans = [
   {
     nameKey: "pricing.plan.premium.name",
     price: "$4.99",
-    period: "/mois",
+    periodKey: "pricing.period.month",
     descriptionKey: "pricing.plan.premium.desc",
     features: [
       "pricing.features.premium.1",
@@ -40,7 +41,7 @@ const plans = [
   {
     nameKey: "pricing.plan.pro.name",
     price: "$9.99",
-    period: "/mois",
+    periodKey: "pricing.period.month",
     descriptionKey: "pricing.plan.pro.desc",
     features: [
       "pricing.features.pro.1",
@@ -58,6 +59,13 @@ const plans = [
 
 export function PricingSection() {
   const { t } = useI18n()
+  const { user } = useAuth()
+  const planHref = (planKey: string) => {
+    const plan = planKey.split(".").pop() || "free"
+    if (!user) return "/login"
+    if (plan === "free") return "/dashboard"
+    return `/credits?plan=${plan}`
+  }
   return (
     <section id="pricing" className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -81,14 +89,14 @@ export function PricingSection() {
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs">
-                  Populaire
+                  {t("pricing.popular", "Popular")}
                 </Badge>
               )}
               <div className="text-center">
                 <h3 className="text-xl font-semibold">{t(plan.nameKey)}</h3>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">{plan.price}</span>
-                  {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
+                  {plan.periodKey && <span className="text-muted-foreground">{t(plan.periodKey, "/month")}</span>}
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{t(plan.descriptionKey)}</p>
               </div>
@@ -102,7 +110,7 @@ export function PricingSection() {
                 ))}
               </ul>
 
-              <Link href="/login" className="mt-8 block">
+              <Link href={planHref(plan.nameKey)} className="mt-8 block">
                 <Button className="w-full rounded-full" variant={plan.popular ? "default" : "outline"}>
                   {t(plan.ctaKey)}
                 </Button>
@@ -117,22 +125,24 @@ export function PricingSection() {
               <Sparkles className="h-3.5 w-3.5" /> {t("pricing.packs.badge", "Packs crédits")}
             </div>
             <h3 className="text-2xl font-semibold">{t("pricing.packs.title", "Need a boost? Buy credits on demand.")}</h3>
-            <p className="text-sm text-muted-foreground">Idéal pour les campagnes ponctuelles ou pour tester des séries motion.</p>
+            <p className="text-sm text-muted-foreground">
+              {t("pricing.packs.description", "Perfect for one-off campaigns or testing motion series.")}
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: "10 crédits", price: "$2", highlight: false },
-              { label: "20 crédits", price: "$3.99", highlight: false },
-              { label: "50 crédits", price: "$5.99", highlight: true },
-              { label: "100 crédits", price: "$12", highlight: true },
+              { labelKey: "pricing.packs.option10", price: "$2", highlight: false },
+              { labelKey: "pricing.packs.option20", price: "$3.99", highlight: false },
+              { labelKey: "pricing.packs.option50", price: "$5.99", highlight: true },
+              { labelKey: "pricing.packs.option100", price: "$12", highlight: true },
             ].map((pack) => (
               <div
-                key={pack.label}
+                key={pack.labelKey}
                 className={`rounded-2xl border px-4 py-4 text-center ${
                   pack.highlight ? "border-primary bg-primary/5" : "border-border/70 bg-card/80"
                 }`}
               >
-                <p className="font-semibold">{pack.label}</p>
+                <p className="font-semibold">{t(pack.labelKey)}</p>
                 <p className="text-sm text-muted-foreground">{pack.price}</p>
               </div>
             ))}
@@ -143,14 +153,16 @@ export function PricingSection() {
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary">{t("pricing.cta.primary", "Ready to launch?")}</p>
           <h3 className="text-2xl font-semibold">{t("pricing.final.title", "We’ll help set up your brand kit and first series.")}</h3>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href="/login">
+            <Link href={user ? "/dashboard" : "/login"}>
               <Button size="lg" className="gap-2 rounded-full px-7">
                 {t("pricing.final.primary", "Start now")} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="lg" className="rounded-full">
-              {t("pricing.final.secondary", "Talk to the team")}
-            </Button>
+            <Link href="/support">
+              <Button variant="ghost" size="lg" className="rounded-full">
+                {t("pricing.final.secondary", "Talk to the team")}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

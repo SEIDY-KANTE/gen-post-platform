@@ -45,10 +45,10 @@ export default function DashboardPage() {
   const uniqueTemplates = new Set(posts.map(p => p.template)).size
 
   const stats = [
-    { label: t("home.stats.posts", "Posts created"), value: posts.length, icon: TrendingUp, hint: "+3" },
+    { label: t("home.stats.posts", "Posts created"), value: posts.length, icon: TrendingUp, hint: "" },
     { label: t("home.stats.credits", "Credits left"), value: user?.credits || 0, icon: Coins, hint: t("home.cta.lowCredits", "Credits running low") },
     { label: t("home.stats.templates", "Templates used"), value: uniqueTemplates, icon: Layout, hint: t("home.templates.title", "Favorite templates") },
-    { label: t("home.stats.timeSaved", "Time saved"), value: "6h", icon: Clock3, hint: "VS manual design" },
+    { label: t("home.stats.timeSaved", "Time saved"), value: "6h", icon: Clock3, hint: t("home.stats.hintManual", "vs manual design") },
   ]
 
   const quickActions = [
@@ -82,9 +82,9 @@ export default function DashboardPage() {
   const premiumTemplates = templates.filter((t) => t.isPremium).slice(0, 6)
 
   const activity = [
-    { label: t("home.activity.item1", "Brand kit applied"), time: "2h ago", status: "Success" },
-    { label: t("home.activity.item2", "MP4 export (Reel)"), time: "4h ago", status: "Done" },
-    { label: t("home.activity.item3", "AI generation (quote)"), time: "Yesterday", status: "OK" },
+    { label: t("home.activity.item1", "Brand kit applied"), time: t("home.activity.time2h", "2h ago"), status: t("home.activity.statusSuccess", "Success") },
+    { label: t("home.activity.item2", "MP4 export (Reel)"), time: t("home.activity.time4h", "4h ago"), status: t("home.activity.statusDone", "Done") },
+    { label: t("home.activity.item3", "AI generation (quote)"), time: t("home.activity.timeYesterday", "Yesterday"), status: t("home.activity.statusOk", "OK") },
   ]
 
   const checklist = [
@@ -112,7 +112,7 @@ export default function DashboardPage() {
         action={
           <Link href="/templates">
             <Button size="sm" className="rounded-full">
-              Explorer les templates
+              {t("templates.title", "Templates")}
             </Button>
           </Link>
         }
@@ -152,22 +152,24 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary">
                     <ShieldCheck className="h-4 w-4" />
-                    Safe zones vérifiées
+                    {t("home.summary.safeZones", "Safe zones verified")}
                   </span>
                   <span className="flex items-center gap-2 rounded-full bg-card/70 px-3 py-1">
                     <Clock3 className="h-4 w-4 text-accent" />
-                    +6h gagnées / semaine
+                    {t("home.summary.timeSaved", "+6h saved / week")}
                   </span>
                   <span className="flex items-center gap-2 rounded-full bg-card/70 px-3 py-1">
                     <Star className="h-4 w-4 text-primary" />
-                    4.9/5 créateurs
+                    {t("home.summary.creators", "4.9/5 creators")}
                   </span>
                 </div>
               </div>
               <div className="rounded-2xl border border-border/70 bg-card/70 p-5 shadow-inner">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Résumé studio</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-1 text-primary">Live</span>
+                  <span>{t("home.summary.title", "Studio summary")}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-1 text-primary">
+                    {t("common.live", "Live")}
+                  </span>
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 px-4 py-3">
@@ -176,12 +178,14 @@ export default function DashboardPage() {
                         <Wand2 className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold">Générations IA</p>
-                        <p className="text-xs text-muted-foreground">Prêt en 15s • 3 ratios</p>
+                        <p className="text-sm font-semibold">{t("home.summary.genTitle", "AI generations")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("home.summary.genSubtitle", "Ready in 15s • 3 ratios")}
+                        </p>
                       </div>
                     </div>
                     <Badge variant="secondary" className="rounded-full bg-primary/10 text-primary">
-                      +3 aujourd&apos;hui
+                      {t("home.summary.genBadge", "+3 today")}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 px-4 py-3">
@@ -199,18 +203,18 @@ export default function DashboardPage() {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Coins className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">Crédits restants</p>
-                        <p className="text-xs text-muted-foreground">Recharge à tout moment</p>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Coins className="h-5 w-5" />
                     </div>
-                    <span className="text-lg font-semibold">{user?.credits ?? 0}</span>
+                    <div>
+                      <p className="text-sm font-semibold">{t("home.credits.remaining", "Credits remaining")}</p>
+                      <p className="text-xs text-muted-foreground">{t("home.credits.anytime", "Recharge anytime")}</p>
+                    </div>
                   </div>
+                  <span className="text-lg font-semibold">{user?.credits ?? 0}</span>
                 </div>
+              </div>
               </div>
             </CardContent>
           </Card>
@@ -244,11 +248,15 @@ export default function DashboardPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-primary">Activité</p>
-                    <h3 className="text-lg font-semibold">Suivi en temps réel</h3>
+                    <p className="text-xs uppercase tracking-[0.18em] text-primary">
+                      {t("home.activity.title", "Activity")}
+                    </p>
+                    <h3 className="text-lg font-semibold">
+                      {t("home.activity.subtitle", "Real-time tracking")}
+                    </h3>
                   </div>
                   <Badge variant="secondary" className="rounded-full bg-primary/10 text-primary">
-                    Live
+                    {t("common.live", "Live")}
                   </Badge>
                 </div>
                 <div className="mt-4 space-y-3">
@@ -313,7 +321,7 @@ export default function DashboardPage() {
                       <h4 className="mt-3 font-semibold">{action.title}</h4>
                       <p className="mt-1 text-sm text-muted-foreground">{action.description}</p>
                       <div className="mt-3 inline-flex items-center gap-1 text-xs text-primary">
-                        Commencer <ArrowRight className="h-3.5 w-3.5" />
+                        {t("home.quickActions.cta", "Start")} <ArrowRight className="h-3.5 w-3.5" />
                       </div>
                     </div>
                   </Link>
@@ -345,12 +353,14 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-primary">Templates favoris</p>
-              <h3 className="text-lg font-semibold">Choisissez une base</h3>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary">
+                {t("home.templates.title", "Favorite templates")}
+              </p>
+              <h3 className="text-lg font-semibold">{t("home.templates.subtitle", "Pick a base")}</h3>
             </div>
             <Link href="/templates">
               <Button variant="ghost" size="sm" className="rounded-full">
-                Voir tout
+                {t("home.templates.viewAll", "View all")}
               </Button>
             </Link>
           </div>
@@ -402,10 +412,12 @@ export default function DashboardPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <p className="font-semibold">Pas encore de post</p>
-                <p className="text-sm text-muted-foreground">Générez votre premier visuel pour le voir ici.</p>
+                <p className="font-semibold">{t("history.empty.title", "No posts yet")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("history.empty.subtitle", "Create your first post to see it here.")}
+                </p>
                 <Link href="/studio/ai">
-                  <Button className="rounded-full">Créer maintenant</Button>
+                  <Button className="rounded-full">{t("home.recent.create", "Create now")}</Button>
                 </Link>
               </div>
             ) : (
@@ -438,7 +450,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
                         <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                         <span className="flex items-center gap-1 text-primary">
-                          Voir <ArrowRight className="h-3.5 w-3.5" />
+                          {t("home.recent.view", "View")} <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
                     </div>
@@ -475,7 +487,7 @@ export default function DashboardPage() {
                       <p className="text-xs font-semibold">{template.preview}</p>
                     </div>
                     <div className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-1 text-[10px] font-semibold text-amber-300">
-                      Premium
+                      {t("home.premium.badge", "Premium")}
                     </div>
                   </div>
                   <div className="px-3 py-2">

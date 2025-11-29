@@ -84,7 +84,10 @@ export function FeaturesSection() {
             <p className="text-sm font-semibold text-primary">{t("features.block.ship.tag", "Resize & export")}</p>
             <h3 className="text-2xl font-semibold">{t("features.platform.title", "Safe zones, ratios and text auto-adapted.")}</h3>
             <p className="text-sm text-muted-foreground">
-              Un clic pour décliner votre visuel pour IG, TikTok, LinkedIn et X. On ajuste la typographie, le recadrage et la durée motion pour rester lisible.
+              {t(
+                "features.platform.body",
+                "One click to adapt your visual for IG, TikTok, LinkedIn and X. We adjust typography, cropping and motion duration to stay readable.",
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">

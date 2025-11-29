@@ -87,7 +87,9 @@ export function TemplatesPreview() {
               <div className={`absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-90`} />
               <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-white">
                 <p className="text-sm font-bold sm:text-lg">{template.preview}</p>
-                <span className="mt-2 rounded-full bg-white/15 px-3 py-1 text-xs">Swap colorway</span>
+                <span className="mt-2 rounded-full bg-white/15 px-3 py-1 text-xs">
+                  {t("templatesPreview.swap", "Swap colorway")}
+                </span>
               </div>
               <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 py-3 text-xs text-white/80">
                 <Badge variant="secondary" className="border border-white/30 bg-white/20 text-[11px] text-white">
@@ -98,7 +100,9 @@ export function TemplatesPreview() {
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
                 <div>
                   <p className="font-semibold">{template.name}</p>
-                  <p className="text-xs text-white/80">Éditable - layers verrouillés</p>
+                  <p className="text-xs text-white/80">
+                    {t("templatesPreview.editable", "Editable - locked layers")}
+                  </p>
                 </div>
                 <PlayCircle className="h-6 w-6" />
               </div>
