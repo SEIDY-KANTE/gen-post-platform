@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAppStore } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
 import { templates } from "@/lib/templates"
+import { useI18n } from "@/lib/i18n"
 import {
   Wand2,
   Palette,
@@ -28,6 +29,7 @@ import {
 export default function DashboardPage() {
   const { user: authUser } = useAuth()
   const { user, posts, fetchUser, fetchPosts } = useAppStore()
+  const { t } = useI18n()
 
   // Fetch user data and posts on mount
   useEffect(() => {
@@ -43,36 +45,36 @@ export default function DashboardPage() {
   const uniqueTemplates = new Set(posts.map(p => p.template)).size
 
   const stats = [
-    { label: "Posts créés", value: posts.length, icon: TrendingUp, hint: "+3 cette semaine" },
-    { label: "Crédits restants", value: user?.credits || 0, icon: Coins, hint: "Recharge dès 5 crédits" },
-    { label: "Templates utilisés", value: uniqueTemplates, icon: Layout, hint: "Variez vos formats" },
-    { label: "Temps gagné", value: "6h", icon: Clock3, hint: "VS design manuel" },
+    { label: t("home.stats.posts", "Posts created"), value: posts.length, icon: TrendingUp, hint: "+3" },
+    { label: t("home.stats.credits", "Credits left"), value: user?.credits || 0, icon: Coins, hint: t("home.cta.lowCredits", "Credits running low") },
+    { label: t("home.stats.templates", "Templates used"), value: uniqueTemplates, icon: Layout, hint: t("home.templates.title", "Favorite templates") },
+    { label: t("home.stats.timeSaved", "Time saved"), value: "6h", icon: Clock3, hint: "VS manual design" },
   ]
 
   const quickActions = [
     {
-      title: "Générateur IA",
-      description: "Brief 1 phrase, déclinaisons automatiques.",
+      title: t("studio.ai.headerTitle", "AI Generator"),
+      description: t("home.quickActions", "Brief 1 phrase, automatic variations."),
       icon: Wand2,
       href: "/studio/ai",
       color: "from-primary/15 via-primary/10 to-accent/10",
-      badge: "Rapide",
+      badge: t("templates.mode.ai", "AI Mode"),
     },
     {
-      title: "Éditeur manuel",
-      description: "Contrôle total, grilles et calques verrouillables.",
+      title: t("studio.manual.headerTitle", "Manual Editor"),
+      description: t("home.quickActions", "Full control, grids and locked layers."),
       icon: Palette,
       href: "/studio/manual",
       color: "from-accent/15 via-card to-primary/10",
-      badge: "Précis",
+      badge: t("templates.mode.manual", "Manual"),
     },
     {
-      title: "Bibliothèque templates",
-      description: "Séries motion & carrousels prêts à poster.",
+      title: t("templates.title", "Templates"),
+      description: t("templates.description", "Motion series & carousels ready to post."),
       icon: Layout,
       href: "/templates",
       color: "from-orange-400/15 via-primary/5 to-accent/10",
-      badge: "Nouveau",
+      badge: t("templatesPreview.note", "New"),
     },
   ]
 
@@ -80,15 +82,15 @@ export default function DashboardPage() {
   const premiumTemplates = templates.filter((t) => t.isPremium).slice(0, 6)
 
   const activity = [
-    { label: "Brand kit appliqué", time: "Il y a 2h", status: "Succès" },
-    { label: "Export MP4 (Reel)", time: "Il y a 4h", status: "Terminé" },
-    { label: "Génération IA (quote)", time: "Hier", status: "OK" },
+    { label: t("home.activity.item1", "Brand kit applied"), time: "2h ago", status: "Success" },
+    { label: t("home.activity.item2", "MP4 export (Reel)"), time: "4h ago", status: "Done" },
+    { label: t("home.activity.item3", "AI generation (quote)"), time: "Yesterday", status: "OK" },
   ]
 
   const checklist = [
-    "Configurer vos safe zones IG/LinkedIn",
-    "Activer les templates motion favoris",
-    "Uploader vos polices et logos",
+    t("home.checklist.item1", "Set safe zones IG/LinkedIn"),
+    t("home.checklist.item2", "Enable favorite motion templates"),
+    t("home.checklist.item3", "Upload your fonts and logos"),
   ]
 
   const getTemplateForPost = (post: typeof posts[0]) => {
@@ -105,8 +107,8 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen space-y-6">
       <DashboardHeader
-        title={`Bonjour ${user?.name || "créateur"} 👋`}
-        description="Un seul espace pour générer, animer et publier vos posts."
+        title={`${t("home.welcome", "Welcome back")} ${user?.name || "creator"} 👋`}
+        description={t("home.subtitle", "One space to generate, animate and publish your posts.")}
         action={
           <Link href="/templates">
             <Button size="sm" className="rounded-full">
@@ -124,24 +126,26 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                   <Sparkles className="h-4 w-4" />
-                  Flux quotidien
+                  {t("home.activity", "Live activity")}
                 </div>
                 <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
-                  Lancer un canvas et décliner pour IG, TikTok & LinkedIn en 15s.
+                  {t("home.subtitle", "Launch a canvas and adapt for IG, TikTok & LinkedIn in 15s.")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Templates motion, ratios auto, brand kit appliqué. Choisissez un mode, on s’occupe de l’alignement,
-                  des safe zones et des exports.
+                  {t(
+                    "hero.subtitle",
+                    "Motion templates, auto ratios, brand kit applied. Choose a mode, we handle alignment, safe zones and exports.",
+                  )}
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Link href="/studio/ai">
                     <Button size="lg" className="gap-2 rounded-full px-6">
-                      Générer avec l&apos;IA <ArrowRight className="h-4 w-4" />
+                      {t("studio.ai.headerTitle", "AI Generator")} <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                   <Link href="/studio/manual">
                     <Button variant="ghost" size="lg" className="rounded-full px-6">
-                      Construire manuellement
+                      {t("studio.manual.headerTitle", "Manual Editor")}
                     </Button>
                   </Link>
                 </div>
@@ -186,12 +190,12 @@ export default function DashboardPage() {
                         <PlaySquare className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold">Templates motion</p>
-                        <p className="text-xs text-muted-foreground">Stories, Reels, carrousels</p>
+                        <p className="text-sm font-semibold">{t("templatesPreview.filters.motion", "Motion templates")}</p>
+                        <p className="text-xs text-muted-foreground">{t("templatesPreview.note", "Stories, Reels, carousels")}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="rounded-full">
-                      6 en favoris
+                      6 {t("templates.favorites", "Favorites")}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 px-4 py-3">
@@ -216,8 +220,8 @@ export default function DashboardPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-primary">Objectif semaine</p>
-                    <h3 className="text-xl font-semibold">Publier 5 posts</h3>
+                    <p className="text-xs uppercase tracking-[0.18em] text-primary">{t("home.goal.title", "Publish 5 posts")}</p>
+                    <h3 className="text-xl font-semibold">{t("home.goal.title", "Publish 5 posts")}</h3>
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Flame className="h-5 w-5" />
@@ -230,7 +234,9 @@ export default function DashboardPage() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {posts.length >= 5 ? "Objectif atteint !" : `${Math.max(0, 5 - posts.length)} à publier cette semaine.`}
+                  {posts.length >= 5
+                    ? t("home.goal.done", "Goal reached!")
+                    : `${Math.max(0, 5 - posts.length)} ${t("home.goal.remaining", "left to publish this week.")}`}
                 </p>
               </CardContent>
             </Card>
@@ -288,8 +294,8 @@ export default function DashboardPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-primary">Accès rapide</p>
-                  <h3 className="text-lg font-semibold">Créer en quelques secondes</h3>
+                  <p className="text-xs uppercase tracking-[0.2em] text-primary">{t("home.quickActions", "Create in seconds")}</p>
+                  <h3 className="text-lg font-semibold">{t("home.quickActions", "Create in seconds")}</h3>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -320,8 +326,8 @@ export default function DashboardPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-primary">Checklist</p>
-                  <h3 className="text-lg font-semibold">Prêt pour publier</h3>
+                  <p className="text-xs uppercase tracking-[0.2em] text-primary">{t("home.checklist.title", "Ready to publish")}</p>
+                  <h3 className="text-lg font-semibold">{t("home.checklist.title", "Ready to publish")}</h3>
                 </div>
               </div>
               <div className="mt-4 space-y-3">
@@ -366,7 +372,7 @@ export default function DashboardPage() {
                   </div>
                   {template.isPremium && (
                     <div className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-1 text-[11px] font-semibold text-amber-300">
-                      Premium
+                      {t("home.premium.badge", "Exclusive")}
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-xs text-white/90">
@@ -379,17 +385,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr,0.9fr]">
-          <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-primary">Posts récents</p>
-                <h3 className="text-lg font-semibold">Vos dernières créations</h3>
-              </div>
-              <Link href="/history">
-                <Button variant="ghost" size="sm" className="rounded-full">
-                  Historique
-                </Button>
-              </Link>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary">{t("home.recent.title", "Recent posts")}</p>
+              <h3 className="text-lg font-semibold">{t("home.recent.title", "Recent posts")}</h3>
+            </div>
+            <Link href="/history">
+              <Button variant="ghost" size="sm" className="rounded-full">
+                {t("home.recent.cta", "History")}
+              </Button>
+            </Link>
             </div>
             {posts.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/80 bg-card/80 px-6 py-10 text-center">
@@ -445,11 +451,11 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-primary">Templates premium</p>
-                <h3 className="text-lg font-semibold">Boost visuel</h3>
+                <p className="text-xs uppercase tracking-[0.2em] text-primary">{t("home.premium.title", "Premium templates")}</p>
+                <h3 className="text-lg font-semibold">{t("home.premium.title", "Boost visuals")}</h3>
               </div>
               <Badge variant="secondary" className="rounded-full bg-amber-500/15 text-amber-400">
-                Exclusif
+                {t("home.premium.badge", "Exclusive")}
               </Badge>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -490,14 +496,14 @@ export default function DashboardPage() {
                   <Coins className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Crédits bientôt épuisés</h3>
+                  <h3 className="text-lg font-semibold">{t("home.cta.lowCredits", "Credits running low")}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Il vous reste {user.credits} crédits. Rechargez pour continuer à créer sans interruption.
+                    {t("credits.current", "Credits")}: {user.credits}
                   </p>
                 </div>
               </div>
               <Link href="/credits">
-                <Button className="rounded-full">Acheter des crédits</Button>
+                <Button className="rounded-full">{t("home.cta.buy", "Buy credits")}</Button>
               </Link>
             </CardContent>
           </Card>

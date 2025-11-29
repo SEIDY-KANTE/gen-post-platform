@@ -353,7 +353,7 @@ export default function AIStudioPage() {
                       <SelectContent>
                         {styleOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(`styles.${option.value}`, option.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -369,7 +369,7 @@ export default function AIStudioPage() {
                       <SelectContent>
                         {toneOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(`tone.${option.value}`, option.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -475,16 +475,24 @@ export default function AIStudioPage() {
                         >
                           <span className="line-clamp-2">{template.name}</span>
                           {template.isPremium && <Crown className="absolute right-1 top-1 h-3 w-3 text-yellow-400" />}
-                          <button
+                          <span
+                            role="button"
+                            tabIndex={0}
                             className="absolute right-1 bottom-1 rounded-full bg-black/30 p-1 text-white transition hover:bg-black/50"
                             onClick={(e) => {
                               e.stopPropagation()
                               toggleFavorite(template.id)
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                toggleFavorite(template.id)
+                              }
+                            }}
                             aria-label="Toggle favorite"
                           >
                             <Star className={`h-3.5 w-3.5 ${favorites.includes(template.id) ? "fill-yellow-400 text-yellow-300" : ""}`} />
-                          </button>
+                          </span>
                         </button>
                       ))}
                     </div>

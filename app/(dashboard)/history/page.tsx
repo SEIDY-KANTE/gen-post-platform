@@ -235,7 +235,7 @@ export default function HistoryPage() {
                   <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button size="sm" variant="secondary" onClick={() => setViewingPost(post)}>
                       <Eye className="mr-1 h-3 w-3" />
-                      View
+                      {t("history.action.view", "View")}
                     </Button>
                   </div>
                   </div>
@@ -243,7 +243,8 @@ export default function HistoryPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-medium">{post.title || "Untitled Post"}</h3>
+                      <h3 className="truncate font-medium">{post.title || t("history.empty.title", "Untitled Post")}</h3>
+                      {/* Date is shown locale-neutral for now; could format with Intl.DateTimeFormat per locale */}
                       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         {new Date(post.createdAt).toLocaleDateString()}
@@ -263,7 +264,7 @@ export default function HistoryPage() {
                       onClick={() => setViewingPost(post)}
                     >
                       <Eye className="h-3 w-3" />
-                      View
+                      {t("history.action.view", "View")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -295,7 +296,7 @@ export default function HistoryPage() {
       >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{viewingPost?.title || "View Post"}</DialogTitle>
+            <DialogTitle>{viewingPost?.title || t("history.action.view", "View")}</DialogTitle>
             <DialogDescription>
               Created on {viewingPost && new Date(viewingPost.createdAt).toLocaleString()}
             </DialogDescription>
@@ -339,11 +340,11 @@ export default function HistoryPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingPost(null)}>
-              Close
+              {t("history.action.close", "Close")}
             </Button>
             <Button onClick={handleExportClick} className="gap-2">
               <Download className="h-4 w-4" />
-              Export PNG
+              {t("history.action.export", "Export PNG")}
             </Button>
           </DialogFooter>
         </DialogContent>

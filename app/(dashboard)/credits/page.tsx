@@ -164,9 +164,7 @@ export default function CreditsPage() {
                   style={{ width: `${creditsPercent}%` }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Rechargez avant d&apos;atteindre 0 pour éviter les interruptions.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("credits.tip", "Recharge before you hit 0 to avoid interruptions.")}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -188,7 +186,7 @@ export default function CreditsPage() {
 
         {/* Credit Packages */}
         <div>
-          <h2 className="mb-4 text-2xl font-bold">One-Time Credit Packs</h2>
+          <h2 className="mb-4 text-2xl font-bold">{t("credits.oneTime", "One-Time Credit Packs")}</h2>
           <div className="grid gap-4 md:grid-cols-4">
             {creditPackages.map((pkg) => (
               <Card
@@ -202,15 +200,13 @@ export default function CreditsPage() {
                     </Badge>
                   </div>
                 )}
-                {
-                  pkg.bestValue && (
-                    <div className="flex justify-center">
-                      <Badge className="rounded-b-md rounded-t-none bg-green-500 text-white">
-                        Best Value
-                      </Badge>
-                    </div>
-                  )
-                }
+                {pkg.bestValue && (
+                  <div className="flex justify-center">
+                    <Badge className="rounded-b-md rounded-t-none bg-green-500 text-white">
+                      {t("credits.bestValue", "Best Value")}
+                    </Badge>
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <pkg.icon className="h-8 w-8 text-primary" />
@@ -248,9 +244,9 @@ export default function CreditsPage() {
 
         {/* Subscription Plans */}
         <div>
-          <h2 className="mb-4 text-2xl font-bold">Subscription Plans</h2>
+          <h2 className="mb-4 text-2xl font-bold">{t("credits.subscriptions", "Subscription Plans")}</h2>
           <p className="mb-6 text-muted-foreground">
-            Get credits every month with our subscription plans
+            {t("credits.desc", "Get credits every month with our subscription plans")}
           </p>
           <div className="grid gap-6 md:grid-cols-3">
             {subscriptionPlans.map((plan) => (
