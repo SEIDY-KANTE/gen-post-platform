@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Instagram, Linkedin, Twitter, Facebook, Share2, Copy } from "lucide-react"
+import { MessageCircle, Linkedin, Twitter, Facebook, Share2, Copy } from "lucide-react"
 
 interface ShareButtonsProps {
     imageDataUrl: string
@@ -27,21 +27,8 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
         }
     }
 
-    const shareToInstagram = async () => {
-        // Instagram doesn't support direct web sharing
-        // Download image and copy caption to clipboard
-        downloadImage()
-
-        try {
-            await navigator.clipboard.writeText(content)
-            toast.success("Image downloaded! Caption copied to clipboard. Open Instagram to share.")
-        } catch (error) {
-            toast.success("Image downloaded! Open Instagram and paste your caption.")
-        }
-    }
-
-    const shareToFacebook = async () => {
-        // Try Web Share API first (works on mobile with native apps)
+    const shareToWhatsApp = async () => {
+        // WhatsApp works great with Web Share API on mobile
         if (canShare) {
             try {
                 const response = await fetch(imageDataUrl)
@@ -53,76 +40,44 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                     text: content,
                 })
 
-                toast.success("Shared successfully!")
+                toast.success("Shared to WhatsApp!")
                 return
             } catch (error) {
-                // If user cancels, just return
                 if ((error as Error).name === 'AbortError') {
                     return
                 }
-                // Otherwise fallback to download + redirect
+                // Fallback if share fails
             }
         }
 
-        // Fallback: Download image and open Facebook
+        // Fallback: Download and open WhatsApp Web
+        downloadImage()
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(content)}`
+        window.open(whatsappUrl, '_blank')
+        toast.info("Image downloaded! Attach it to your WhatsApp message.")
+    }
+
+    const shareToFacebook = () => {
+        // Facebook doesn't support image upload via Web Share API reliably
+        // Just download and open Facebook
         downloadImage()
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(content)}`
         window.open(facebookUrl, '_blank', 'width=600,height=400')
-        toast.info("Image downloaded! Upload it to your Facebook post.")
+        toast.info("Image downloaded! Upload it manually to your Facebook post.")
     }
 
-    const shareToLinkedIn = async () => {
-        // Try Web Share API first (works on mobile with native apps)
-        if (canShare) {
-            try {
-                const response = await fetch(imageDataUrl)
-                const blob = await response.blob()
-                const file = new File([blob], `genpost-${platform}.png`, { type: 'image/png' })
-
-                await navigator.share({
-                    files: [file],
-                    text: content,
-                })
-
-                toast.success("Shared successfully!")
-                return
-            } catch (error) {
-                if ((error as Error).name === 'AbortError') {
-                    return
-                }
-            }
-        }
-
-        // Fallback: Download image and open LinkedIn
+    const shareToLinkedIn = () => {
+        // LinkedIn doesn't support image upload via Web Share API
+        // Just download and open LinkedIn
         downloadImage()
         const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
         window.open(linkedInUrl, '_blank', 'width=600,height=600')
-        toast.info("Image downloaded! Add it to your LinkedIn post.")
+        toast.info("Image downloaded! Add it manually to your LinkedIn post.")
     }
 
-    const shareToTwitter = async () => {
-        // Try Web Share API first (works on mobile with native apps)
-        if (canShare) {
-            try {
-                const response = await fetch(imageDataUrl)
-                const blob = await response.blob()
-                const file = new File([blob], `genpost-${platform}.png`, { type: 'image/png' })
-
-                await navigator.share({
-                    files: [file],
-                    text: content,
-                })
-
-                toast.success("Shared successfully!")
-                return
-            } catch (error) {
-                if ((error as Error).name === 'AbortError') {
-                    return
-                }
-            }
-        }
-
-        // Fallback: Download image and open Twitter
+    const shareToTwitter = () => {
+        // Twitter doesn't support image upload via Web Share API
+        // Just download and open Twitter
         downloadImage()
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(content)}`
         window.open(twitterUrl, '_blank', 'width=600,height=400')
@@ -132,7 +87,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
     const shareViaWebShare = async () => {
         if (!canShare) {
             downloadImage()
-            toast.info("Download complete! Open your preferred app to share.")
+            toast.info("Download complete! Share from your device.")
             return
         }
 
@@ -153,7 +108,7 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
             // User cancelled or error occurred
             if ((error as Error).name !== 'AbortError') {
                 downloadImage()
-                toast.info("Download complete! Open your preferred app to share.")
+                toast.info("Download complete! Share from your device.")
             }
         }
     }
@@ -174,11 +129,11 @@ export function ShareButtons({ imageDataUrl, content, platform, onDownload }: Sh
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={shareToInstagram}
+                    onClick={shareToWhatsApp}
                     className="gap-2"
                 >
-                    <Instagram className="h-4 w-4" />
-                    Instagram
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
                 </Button>
 
                 <Button

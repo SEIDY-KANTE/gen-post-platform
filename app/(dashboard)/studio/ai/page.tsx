@@ -129,34 +129,33 @@ export default function AIStudioPage() {
       link.href = dataUrl
       link.click()
 
-      // Then save to history
-      const savePromise = addPost({
-        title: topic || "Untitled Post",
-        content,
-        template: selectedTemplate.id,
-        platform,
-        thumbnail: dataUrl,
-        author,
-        gradient: backgroundType === "gradient" ? gradient : undefined,
-        backgroundColor: backgroundType === "solid" ? backgroundColor : undefined,
-        borderColor,
-        borderWidth,
-        textColor,
-        accentColor,
-        fontFamily,
-        fontWeight,
-        fontSize,
-        textAlign,
-        padding,
-        backgroundImage: backgroundImage || undefined,
-      })
-
-      toast.promise(savePromise, {
-        loading: 'Saving to history...',
-        success: 'Post exported and saved!',
-        error: 'Failed to save to history',
-      })
-
+      // Then save to history and WAIT for completion
+      try {
+        await addPost({
+          title: topic || "Untitled Post",
+          content,
+          template: selectedTemplate.id,
+          platform,
+          thumbnail: dataUrl,
+          author,
+          gradient: backgroundType === "gradient" ? gradient : undefined,
+          backgroundColor: backgroundType === "solid" ? backgroundColor : undefined,
+          borderColor,
+          borderWidth,
+          textColor,
+          accentColor,
+          fontFamily,
+          fontWeight,
+          fontSize,
+          textAlign,
+          padding,
+          backgroundImage: backgroundImage || undefined,
+        })
+        toast.success('Post exported and saved!')
+      } catch (error) {
+        console.error('Failed to save post:', error)
+        toast.error('Post exported but failed to save to history')
+      }
     },
     [
       platform,

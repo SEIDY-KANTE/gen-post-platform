@@ -76,45 +76,45 @@ export default function ManualStudioPage() {
   const canUseImages = user?.plan === "pro"
 
   const handleExport = useCallback(
-    (dataUrl: string) => {
+    async (dataUrl: string) => {
       // Download the image first
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
 
-      // Then save to history
-      const savePromise = addPost({
-        title: content.substring(0, 30) + "...",
-        content,
-        template: "custom",
-        platform,
-        thumbnail: dataUrl,
-        author,
-        gradient:
-          backgroundType === "gradient"
-            ? gradient
-            : backgroundType === "custom"
-              ? `linear-gradient(${customGradient.angle}deg, ${customGradient.color1} 0%, ${customGradient.color2} 100%)`
-              : undefined,
-        backgroundColor: backgroundType === "solid" ? solidColor : undefined,
-        borderColor,
-        borderWidth,
-        textColor,
-        accentColor,
-        fontFamily,
-        fontWeight,
-        fontSize,
-        textAlign,
-        padding,
-        backgroundImage: backgroundImage || undefined,
-      })
-
-      toast.promise(savePromise, {
-        loading: 'Saving to history...',
-        success: 'Post exported and saved!',
-        error: 'Failed to save to history',
-      })
+      // Then save to history and WAIT for completion
+      try {
+        await addPost({
+          title: content.substring(0, 30) + "...",
+          content,
+          template: "custom",
+          platform,
+          thumbnail: dataUrl,
+          author,
+          gradient:
+            backgroundType === "gradient"
+              ? gradient
+              : backgroundType === "custom"
+                ? `linear-gradient(${customGradient.angle}deg, ${customGradient.color1} 0%, ${customGradient.color2} 100%)`
+                : undefined,
+          backgroundColor: backgroundType === "solid" ? solidColor : undefined,
+          borderColor,
+          borderWidth,
+          textColor,
+          accentColor,
+          fontFamily,
+          fontWeight,
+          fontSize,
+          textAlign,
+          padding,
+          backgroundImage: backgroundImage || undefined,
+        })
+        toast.success('Post exported and saved!')
+      } catch (error) {
+        console.error('Failed to save post:', error)
+        toast.error('Post exported but failed to save to history')
+      }
     },
     [
       platform,
