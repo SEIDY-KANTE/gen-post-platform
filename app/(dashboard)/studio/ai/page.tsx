@@ -317,6 +317,8 @@ export default function AIStudioPage() {
                   padding={padding}
                   backgroundImage={backgroundImage || undefined}
                   onRender={setPreviewImageUrl}
+                  onExport={handleExport}
+                  exportTrigger={exportTrigger}
                   maxHeight="30vh"
                 />
               </CardContent>
