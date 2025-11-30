@@ -612,72 +612,74 @@ export default function AIStudioPage() {
 
         {/* Desktop Preview (Right Panel - Always Visible) */}
         <div className="hidden flex-1 lg:block">
-          <div className="sticky top-6 space-y-4">
-            <Card className="h-full">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
-                  <Badge variant="outline">
-                    {platformSizes[platform].width} x {platformSizes[platform].height}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="flex h-[calc(100%-4rem)] items-center justify-center p-8">
-                <PreviewCanvas
-                  platform={platform}
-                  content={content}
-                  author={author}
-                  gradient={backgroundType === "gradient" ? gradient : undefined}
-                  backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
-                  borderColor={borderColor}
-                  borderWidth={borderWidth}
-                  textColor={textColor}
-                  accentColor={accentColor}
-                  fontFamily={fontFamily}
-                  fontWeight={fontWeight}
-                  fontSize={fontSize}
-                  textAlign={textAlign}
-                  padding={padding}
-                  backgroundImage={backgroundImage || undefined}
-                  onRender={setPreviewImageUrl}
-                  onExport={handleExport}
-                  exportTrigger={exportTrigger}
-                  exportEvenIfHidden
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Multi-preview</CardTitle>
-                <p className="text-xs text-muted-foreground">Vérifiez rapidement le cadrage en 9:16, 1:1 et Story.</p>
-              </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-3">
-                {["tiktok", "instagram-square", "instagram-story"].map((p) => (
-                  <div key={p} className="rounded-lg border border-border/70 bg-card/60 p-2 text-center text-xs">
-                    <p className="mb-2 font-semibold">{platformSizes[p as PlatformKey].label}</p>
-                    <PreviewCanvas
-                      platform={p as PlatformKey}
-                      content={content}
-                      author={author}
-                      gradient={backgroundType === "gradient" ? gradient : undefined}
-                      backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
-                      borderColor={borderColor}
-                      borderWidth={borderWidth}
-                      textColor={textColor}
-                      accentColor={accentColor}
-                      fontFamily={fontFamily}
-                      fontWeight={fontWeight}
-                      fontSize={fontSize}
-                      textAlign={textAlign}
-                      padding={padding}
-                      backgroundImage={backgroundImage || undefined}
-                      maxHeight="200px"
-                    />
+          <div className="sticky top-6">
+            <div className="flex max-h-[calc(100vh-3rem)] flex-col gap-4 overflow-y-auto pr-3 pb-36">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>{t("studio.ai.preview", "Preview")}</CardTitle>
+                    <Badge variant="outline">
+                      {platformSizes[platform].width} x {platformSizes[platform].height}
+                    </Badge>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center p-8">
+                  <PreviewCanvas
+                    platform={platform}
+                    content={content}
+                    author={author}
+                    gradient={backgroundType === "gradient" ? gradient : undefined}
+                    backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                    borderColor={borderColor}
+                    borderWidth={borderWidth}
+                    textColor={textColor}
+                    accentColor={accentColor}
+                    fontFamily={fontFamily}
+                    fontWeight={fontWeight}
+                    fontSize={fontSize}
+                    textAlign={textAlign}
+                    padding={padding}
+                    backgroundImage={backgroundImage || undefined}
+                    onRender={setPreviewImageUrl}
+                    onExport={handleExport}
+                    exportTrigger={exportTrigger}
+                    exportEvenIfHidden
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Multi-preview</CardTitle>
+                  <p className="text-xs text-muted-foreground">Vérifiez rapidement le cadrage en 9:16, 1:1 et Story.</p>
+                </CardHeader>
+                <CardContent className="grid grid-cols-3 gap-3">
+                  {["tiktok", "instagram-square", "instagram-story"].map((p) => (
+                    <div key={p} className="rounded-lg border border-border/70 bg-card/60 p-2 text-center text-xs">
+                      <p className="mb-2 font-semibold">{platformSizes[p as PlatformKey].label}</p>
+                      <PreviewCanvas
+                        platform={p as PlatformKey}
+                        content={content}
+                        author={author}
+                        gradient={backgroundType === "gradient" ? gradient : undefined}
+                        backgroundColor={backgroundType === "solid" ? backgroundColor : undefined}
+                        borderColor={borderColor}
+                        borderWidth={borderWidth}
+                        textColor={textColor}
+                        accentColor={accentColor}
+                        fontFamily={fontFamily}
+                        fontWeight={fontWeight}
+                        fontSize={fontSize}
+                        textAlign={textAlign}
+                        padding={padding}
+                        backgroundImage={backgroundImage || undefined}
+                        maxHeight="200px"
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

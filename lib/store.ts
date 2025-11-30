@@ -186,61 +186,68 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   addPost: async (post) => {
     const { user } = get()
-    if (!user) return
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
 
-    const supabase = createClient()
+    // Build payload once so it can be reused for API and local state
+    const designConfig = {
+      gradient: post.gradient,
+      backgroundColor: post.backgroundColor,
+      borderColor: post.borderColor,
+      borderWidth: post.borderWidth,
+      textColor: post.textColor,
+      accentColor: post.accentColor,
+      fontFamily: post.fontFamily,
+      fontWeight: post.fontWeight,
+      fontSize: post.fontSize,
+      textAlign: post.textAlign,
+      padding: post.padding,
+      backgroundImage: post.backgroundImage,
+    }
 
-    // Prepare data for Supabase
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dbPost: any = {
-      user_id: user.id,
-      title: post.title,
-      content: post.content,
-      template_id: post.template,
-      platform: post.platform,
-      thumbnail_url: post.thumbnail,
-      author: post.author,
-      design_config: {
-        gradient: post.gradient,
-        backgroundColor: post.backgroundColor,
-        borderColor: post.borderColor,
-        borderWidth: post.borderWidth,
-        textColor: post.textColor,
-        accentColor: post.accentColor,
-        fontFamily: post.fontFamily,
-        fontWeight: post.fontWeight,
-        fontSize: post.fontSize,
-        textAlign: post.textAlign,
-        padding: post.padding,
-        backgroundImage: post.backgroundImage,
+    // Save via Next API route (uses server-side Supabase with cookies) to avoid mobile auth/storage quirks
+    const response = await fetch("/api/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      credentials: "include",
+      body: JSON.stringify({
+        title: post.title,
+        content: post.content,
+        template_id: post.template,
+        platform: post.platform,
+        thumbnail_url: post.thumbnail,
+        author: post.author,
+        design_config: designConfig,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}))
+      const message = errorBody?.error || `Failed to save post (${response.status})`
+      console.error("Error saving post:", message)
+      throw new Error(message)
     }
 
-    const { data, error } = await supabase
-      .from("posts")
-      .insert(dbPost)
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error saving post:", error)
-      return
+    const { post: savedPost } = await response.json()
+    if (!savedPost) {
+      throw new Error("Invalid response while saving post")
+    }
+    const newPost: GeneratedPost = {
+      id: savedPost.id,
+      title: savedPost.title,
+      content: savedPost.content,
+      template: savedPost.template_id || "",
+      platform: savedPost.platform || "",
+      createdAt: new Date(savedPost.created_at),
+      thumbnail: savedPost.thumbnail_url || undefined,
+      author: savedPost.author || undefined,
+      ...(savedPost.design_config as object),
     }
 
-    if (data) {
-      const newPost: GeneratedPost = {
-        id: data.id,
-        title: data.title,
-        content: data.content,
-        template: data.template_id || "",
-        platform: data.platform || "",
-        createdAt: new Date(data.created_at),
-        thumbnail: data.thumbnail_url || undefined,
-        author: data.author || undefined,
-        ...(data.design_config as object),
-      }
-      set((state) => ({ posts: [newPost, ...state.posts] }))
-    }
+    set((state) => ({ posts: [newPost, ...state.posts] }))
   },
 
   deletePost: async (id) => {
