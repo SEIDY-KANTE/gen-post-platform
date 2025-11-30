@@ -24,6 +24,7 @@ interface PreviewCanvasProps {
   onExport?: (dataUrl: string) => void
   exportTrigger?: number
   maxHeight?: string
+  exportEvenIfHidden?: boolean
 }
 
 const FONT_URLS: Record<string, string> = {
@@ -234,6 +235,7 @@ export function PreviewCanvas({
   onExport,
   exportTrigger,
   maxHeight = "70vh",
+  exportEvenIfHidden = false,
 }: PreviewCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -424,6 +426,13 @@ export function PreviewCanvas({
     // Only export if trigger increased AND we haven't exported this trigger value yet
     const trigger = exportTrigger || 0
     if (trigger > 0 && trigger > prevExportTrigger.current && canvasRef.current && onExport) {
+      // Skip export if the canvas is currently hidden (e.g., alternate layout)
+      const isVisible =
+        !!containerRef.current &&
+        containerRef.current.getClientRects().length > 0 &&
+        containerRef.current.offsetParent !== null
+      if (!isVisible && !exportEvenIfHidden) return
+
       prevExportTrigger.current = trigger
 
       // Wait a bit for canvas to be fully rendered
@@ -437,7 +446,7 @@ export function PreviewCanvas({
 
       return () => clearTimeout(timer)
     }
-  }, [exportTrigger, onExport])
+  }, [exportTrigger, onExport, exportEvenIfHidden])
 
   return (
     <div ref={containerRef} className="relative flex items-center justify-center">
