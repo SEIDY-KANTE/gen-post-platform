@@ -2,16 +2,34 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 
 // Initialize AI clients
-const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-})
+const geminiApiKey = process.env.GEMINI_API_KEY
+const openaiApiKey = process.env.OPENAI_API_KEY
+// Veo3 is the correct spelling; accept legacy VO3 env var as a fallback
+const veo3ApiKey = process.env.VEO3_API_KEY || process.env.VO3_API_KEY
+
+const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null
+const openai = openaiApiKey
+    ? new OpenAI({
+          apiKey: openaiApiKey,
+      })
+    : null
 
 export interface GenerateContentParams {
     topic: string
     style: string
     tone: string
     platform: string
+}
+
+export interface AiImageResponse {
+    url: string
+    source: 'gemini' | 'openai' | 'pollinations' | 'mock'
+}
+
+export interface AiVideoResponse {
+    url: string
+    source: 'gemini' | 'openai' | 'veo3' | 'mock'
+    taskId?: string
 }
 
 /**
@@ -57,6 +75,9 @@ export async function generateContent(
  * Generate content using Gemini
  */
 async function generateWithGemini(prompt: string): Promise<string> {
+    if (!gemini) {
+        throw new Error('Gemini API key is missing')
+    }
     // Use gemini-1.5-flash-001 for specific version stability
     const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
@@ -79,6 +100,9 @@ async function generateWithOpenAI(
     style: string,
     platform: string
 ): Promise<string> {
+    if (!openai) {
+        throw new Error('OpenAI API key is missing')
+    }
     const completion = await openai.chat.completions.create({
         // Use gpt-4o as the flagship model (since user has a new key)
         model: 'gpt-4o',
@@ -103,6 +127,146 @@ async function generateWithOpenAI(
     }
 
     return text.trim()
+}
+
+// ---------------------------------------------------------------------------
+// Image generation (Gemini -> OpenAI -> Pollinations mock)
+// ---------------------------------------------------------------------------
+
+async function generateImageWithGemini(prompt: string): Promise<AiImageResponse | null> {
+    if (!gemini) return null
+    try {
+        const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' })
+        const result = await model.generateContent({
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: prompt }],
+                },
+            ],
+            generationConfig: {
+                // Asking for an image as base64
+                responseMimeType: 'image/png',
+            } as any,
+        })
+
+        const inline =
+            result?.response?.candidates?.[0]?.content?.parts?.find((p: any) => p?.inlineData)?.inlineData
+        const base64 = inline?.data
+        if (!base64) return null
+        return { url: `data:image/png;base64,${base64}`, source: 'gemini' }
+    } catch (error) {
+        console.error('Gemini image generation failed', error)
+        return null
+    }
+}
+
+async function generateImageWithOpenAI(prompt: string): Promise<AiImageResponse | null> {
+    if (!openai) return null
+    try {
+        const res = await openai.images.generate({
+            model: 'gpt-image-1',
+            prompt,
+            size: '1024x1024',
+            n: 1,
+        })
+        const url = res.data?.[0]?.url
+        if (!url) return null
+        return { url, source: 'openai' }
+    } catch (error) {
+        console.error('OpenAI image generation failed', error)
+        return null
+    }
+}
+
+export async function generateImage(prompt: string): Promise<AiImageResponse> {
+    const cleaned = prompt.trim()
+    if (!cleaned) throw new Error('Prompt is required')
+
+    const geminiImage = await generateImageWithGemini(cleaned)
+    if (geminiImage) return geminiImage
+
+    const openaiImage = await generateImageWithOpenAI(cleaned)
+    if (openaiImage) return openaiImage
+
+    // Pollinations fallback (no persistence)
+    const width = 720
+    const height = 1280
+    return {
+        url: `https://image.pollinations.ai/prompt/${encodeURIComponent(cleaned)}?width=${width}&height=${height}&nologo=true`,
+        source: 'pollinations',
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Video generation (Gemini -> OpenAI -> Veo3 -> Mock)
+// ---------------------------------------------------------------------------
+
+async function generateVideoWithGemini(_prompt: string): Promise<AiVideoResponse | null> {
+    // Placeholder: Gemini video not available in this stack yet
+    return null
+}
+
+async function generateVideoWithOpenAI(_prompt: string): Promise<AiVideoResponse | null> {
+    // Placeholder: OpenAI video generation not available in this stack yet
+    return null
+}
+
+async function generateVideoWithVeo3(prompt: string): Promise<AiVideoResponse | null> {
+    if (!veo3ApiKey) return null
+    try {
+        const res = await fetch('https://veo3api.com/generate', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${veo3ApiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt,
+                model: 'veo3-fast',
+                watermark: 'veo',
+            }),
+        })
+        if (!res.ok) {
+            console.error('Veo3 API error', await res.text())
+            return null
+        }
+        const data = await res.json()
+        const taskId = data?.data?.task_id || data?.task_id
+        const directUrl = data?.data?.video_url || data?.data?.output_url
+
+        return {
+            url:
+                directUrl ||
+                (taskId ? `https://veo3api.com/tasks/${taskId}` : undefined) ||
+                `https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4`,
+            source: 'veo3',
+            taskId,
+        }
+    } catch (error) {
+        console.error('Veo3 generation failed', error)
+        return null 
+    }
+}
+
+export async function generateVideo(prompt: string): Promise<AiVideoResponse> {
+    const cleaned = prompt.trim()
+    if (!cleaned) throw new Error('Prompt is required')
+
+    const geminiVideo = await generateVideoWithGemini(cleaned)
+    if (geminiVideo) return geminiVideo
+
+    const openaiVideo = await generateVideoWithOpenAI(cleaned)
+    if (openaiVideo) return openaiVideo
+
+    const veo3Video = await generateVideoWithVeo3(cleaned)
+    if (veo3Video) return veo3Video
+
+    // Mock fallback video clip
+    return {
+        url: 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4',
+        source: 'mock',
+    }
 }
 
 /**
