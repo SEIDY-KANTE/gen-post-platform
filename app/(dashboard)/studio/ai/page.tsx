@@ -160,8 +160,9 @@ export default function AIStudioPage() {
         })
         toast.success('Post exported and saved!')
       } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
         console.error('Failed to save post:', error)
-        toast.error('Post exported but failed to save to history')
+        toast.error(`Post exported but failed to save to history: ${message}`)
       }
     },
     [

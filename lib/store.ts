@@ -190,6 +190,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
       throw new Error("User not authenticated")
     }
 
+    const supabase = createClient()
+
     // Build payload once so it can be reused for API and local state
     const designConfig = {
       gradient: post.gradient,
@@ -206,35 +208,61 @@ export const useAppStore = create<AppState>()((set, get) => ({
       backgroundImage: post.backgroundImage,
     }
 
-    // Save via Next API route (uses server-side Supabase with cookies) to avoid mobile auth/storage quirks
-    const response = await fetch("/api/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        title: post.title,
-        content: post.content,
-        template_id: post.template,
-        platform: post.platform,
-        thumbnail_url: post.thumbnail,
-        author: post.author,
-        design_config: designConfig,
-      }),
-    })
+    // Prefer API route (server-side Supabase using cookies); fall back to client Supabase if auth cookies are missing (mobile Safari)
+    let savedPost: any
+    try {
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title: post.title,
+          content: post.content,
+          template_id: post.template,
+          platform: post.platform,
+          thumbnail_url: post.thumbnail,
+          author: post.author,
+          design_config: designConfig,
+        }),
+      })
 
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}))
-      const message = errorBody?.error || `Failed to save post (${response.status})`
-      console.error("Error saving post:", message)
-      throw new Error(message)
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}))
+        const message = errorBody?.error || `Failed to save post (${response.status})`
+        throw new Error(message)
+      }
+
+      const body = await response.json()
+      savedPost = body?.post
+      if (!savedPost) {
+        throw new Error("Invalid response while saving post")
+      }
+    } catch (apiError) {
+      console.warn("API save failed, falling back to client Supabase:", apiError)
+      const { data, error } = await supabase
+        .from("posts")
+        .insert({
+          user_id: user.id,
+          title: post.title,
+          content: post.content,
+          template_id: post.template,
+          platform: post.platform,
+          thumbnail_url: post.thumbnail,
+          author: post.author,
+          design_config: designConfig,
+        })
+        .select()
+        .single()
+
+      if (error || !data) {
+        console.error("Fallback save failed:", error || apiError)
+        throw new Error(error?.message || (apiError as Error)?.message || "Failed to save post")
+      }
+      savedPost = data
     }
 
-    const { post: savedPost } = await response.json()
-    if (!savedPost) {
-      throw new Error("Invalid response while saving post")
-    }
     const newPost: GeneratedPost = {
       id: savedPost.id,
       title: savedPost.title,
