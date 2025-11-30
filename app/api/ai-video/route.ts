@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { generateImage } from "@/lib/services/ai.service"
+import { generateVideo } from "@/lib/services/ai.service"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(req: Request) {
@@ -38,14 +38,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 })
     }
 
-    const result = await generateImage(prompt)
+    const result = await generateVideo(prompt)
 
     // Best-effort credit deduction
     await supabase.rpc("deduct_credit", { user_id: user.id })
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error(error)
+    console.error("Video generation failed", error)
     return NextResponse.json({ error: "Generation failed" }, { status: 500 })
   }
 }

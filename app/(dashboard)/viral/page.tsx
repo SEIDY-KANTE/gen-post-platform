@@ -37,9 +37,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { platformSizes, type PlatformKey } from "@/lib/templates";
 
-// --- Types & Mock Data ---
-
-type ModelType = "gemini-v3" | "gpt-5" | "nano-banana" | "flux-ultra";
 type MediaType = "image" | "video";
 
 interface Message {
@@ -48,6 +45,8 @@ interface Message {
   content: string;
   mediaUrl?: string;
   mediaType?: MediaType;
+  provider?: string;
+  taskId?: string;
   timestamp: Date;
   modelUsed?: string;
 }
@@ -88,6 +87,7 @@ export default function ViralStudioChat() {
   const { theme, setTheme } = useTheme();
   const { user } = useAppStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const resolvedTasks = useRef<Set<string>>(new Set());
   const isPremium = user?.plan === "premium" || user?.plan === "pro";
 
   // --- Auto-scroll to bottom ---
@@ -125,7 +125,7 @@ export default function ViralStudioChat() {
           body: JSON.stringify({ prompt: userMsg.content }),
         });
         if (!res.ok) throw new Error();
-        const data = (await res.json()) as { url: string };
+        const data = (await res.json()) as { url: string; source?: string };
 
         const assistantMsg: Message = {
           id: (Date.now() + 1).toString(),
@@ -133,6 +133,7 @@ export default function ViralStudioChat() {
           content: t("studio.imageReady", "Your image is ready."),
           mediaType: "image",
           mediaUrl: data.url,
+          provider: data.source,
           modelUsed: AI_MODELS.find((m) => m.id === selectedModel)?.name,
           timestamp: new Date(),
         };
@@ -140,15 +141,26 @@ export default function ViralStudioChat() {
         setMessages((prev) => [...prev, assistantMsg]);
         toast.success(t("studio.imageReady", "Your image is ready."));
       } else {
-        const videoUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-          userMsg.content
-        )}?width=720&height=1280&nologo=true`;
+        const res = await fetch("/api/ai-video", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: userMsg.content }),
+        });
+        if (!res.ok) throw new Error();
+        const data = (await res.json()) as { url: string; source?: string; taskId?: string };
+        const videoUrl =
+          data?.url ||
+          `https://image.pollinations.ai/prompt/${encodeURIComponent(
+            userMsg.content
+          )}?width=720&height=1280&nologo=true`;
         const assistantMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: t("studio.videoReady", "Video concept ready to download."),
           mediaType: "video",
           mediaUrl: videoUrl,
+          provider: data?.source,
+          taskId: data?.taskId,
           modelUsed: AI_MODELS.find((m) => m.id === selectedModel)?.name,
           timestamp: new Date(),
         };
@@ -182,6 +194,47 @@ export default function ViralStudioChat() {
       handleSendMessage();
     }
   };
+
+  // Poll Veo3 tasks to swap in final URL
+  useEffect(() => {
+    const pending = messages.filter(
+      (m) => m.mediaType === "video" && m.provider === "veo3" && m.taskId && !resolvedTasks.current.has(m.taskId)
+    );
+    if (pending.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const msg of pending) {
+        if (!msg.taskId) continue;
+        try {
+          const res = await fetch("/api/ai-video/status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskId: msg.taskId }),
+          });
+          if (!res.ok) continue;
+          const data = (await res.json()) as { status?: string; url?: string; taskId?: string };
+          if (data.status === "completed" && data.url) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === msg.id
+                  ? {
+                      ...m,
+                      mediaUrl: data.url,
+                    }
+                  : m
+              )
+            );
+            resolvedTasks.current.add(msg.taskId);
+            toast.success(t("studio.videoReady", "Video concept ready to download."));
+          }
+        } catch {
+          // swallow polling errors
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [messages, t]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
@@ -337,22 +390,29 @@ export default function ViralStudioChat() {
                             variant="outline"
                             className="h-5 px-1.5 text-[10px] font-normal"
                           >
-                            HD
+                            {msg.provider?.toUpperCase?.() || "HD"}
                           </Badge>
                         </div>
 
                         {/* Media Content */}
                         <div className="relative aspect-[3/4] w-full bg-black/5">
                           {msg.mediaType === "video" ? (
-                            <video
-                              src={msg.mediaUrl}
-                              className="h-full w-full object-cover"
-                              controls
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                            />
+                            <>
+                              <video
+                                src={msg.mediaUrl}
+                                className="h-full w-full object-cover"
+                                controls
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                              />
+                              {msg.provider === "veo3" && msg.taskId && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] font-medium text-white">
+                                  {t("studio.processing", "Processing video...")}
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <img
                               src={msg.mediaUrl}
