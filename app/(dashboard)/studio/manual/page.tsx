@@ -77,6 +77,7 @@ export default function ManualStudioPage() {
   const [templateSearch, setTemplateSearch] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
   const [appliedTemplateName, setAppliedTemplateName] = useState("Custom")
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>("")
   const { t } = useI18n()
 
   const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
@@ -88,7 +89,10 @@ export default function ManualStudioPage() {
       const link = document.createElement("a")
       link.download = `genpost-${platform}-${Date.now()}.png`
       link.href = dataUrl
+      document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
+      setPreviewImageUrl(dataUrl)
 
       // Then save to history and WAIT for completion
       try {
@@ -252,13 +256,13 @@ export default function ManualStudioPage() {
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <DashboardHeader title={t("studio.manual.headerTitle", "Manual Editor")} description={t("studio.manual.headerDesc", "Create your post with full control")} />
 
-      <div className="flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:flex-row">
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-4 md:p-6 lg:flex-row">
         {/* Mobile Preview Toggle */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowPreview(!showPreview)}
-          className="mb-4 w-full gap-2 lg:hidden"
+          className="w-full gap-2 lg:hidden"
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
@@ -266,7 +270,7 @@ export default function ManualStudioPage() {
 
         {/* Mobile Preview (Sticky Top) */}
         {showPreview && (
-          <div className="mb-4 lg:hidden">
+          <div className="lg:hidden">
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -276,28 +280,29 @@ export default function ManualStudioPage() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="flex items-center justify-center p-2">
-                <PreviewCanvas
-                  platform={platform}
-                  content={content}
-                  author={author}
-                  gradient={canvasGradient}
-                  backgroundColor={canvasBackgroundColor}
-                  borderColor={borderColor}
-                  borderWidth={borderWidth}
-                  textColor={textColor}
-                  accentColor={accentColor}
-                  fontFamily={fontFamily}
-                  fontWeight={fontWeight}
-                  fontSize={fontSize}
-                  textAlign={textAlign}
-                  padding={padding}
-                  backgroundImage={backgroundImage || undefined}
-                  maxHeight="35vh"
-                />
-              </CardContent>
-            </Card>
-          </div>
+              <CardContent className="flex items-center justify-center">
+              <PreviewCanvas
+                platform={platform}
+                content={content}
+                author={author}
+                gradient={canvasGradient}
+                backgroundColor={canvasBackgroundColor}
+                borderColor={borderColor}
+                borderWidth={borderWidth}
+                textColor={textColor}
+                accentColor={accentColor}
+                fontFamily={fontFamily}
+                fontWeight={fontWeight}
+                fontSize={fontSize}
+                textAlign={textAlign}
+                padding={padding}
+                backgroundImage={backgroundImage || undefined}
+                onRender={setPreviewImageUrl}
+                maxHeight="30vh"
+              />
+            </CardContent>
+          </Card>
+        </div>
         )}
 
 
@@ -734,7 +739,7 @@ export default function ManualStudioPage() {
                   </Button>
                 </div>
                 <ShareButtons
-                  imageDataUrl=""
+                  imageDataUrl={previewImageUrl}
                   content={content}
                   platform={platform}
                 />
@@ -771,8 +776,10 @@ export default function ManualStudioPage() {
                 textAlign={textAlign}
                 padding={padding}
                 backgroundImage={backgroundImage || undefined}
+                onRender={setPreviewImageUrl}
                 onExport={handleExport}
                 exportTrigger={exportTrigger}
+                exportEvenIfHidden
               />
             </CardContent>
           </Card>
