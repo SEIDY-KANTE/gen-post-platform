@@ -190,6 +190,38 @@ export const useAppStore = create<AppState>()((set, get) => ({
       throw new Error("User not authenticated")
     }
 
+    // Lightly compress the thumbnail to reduce payload size on mobile browsers
+    const compressThumbnail = async (dataUrl: string | undefined) => {
+      if (!dataUrl || !dataUrl.startsWith("data:image")) return dataUrl
+      if (typeof document === "undefined") return dataUrl
+
+      try {
+        const img = new Image()
+        img.crossOrigin = "anonymous"
+        const loadPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+          img.onload = () => resolve(img)
+          img.onerror = () => reject(new Error("Failed to load thumbnail for compression"))
+        })
+        img.src = dataUrl
+        await loadPromise
+
+        const maxSize = 900 // cap the longest side to keep payloads small for Safari/iOS
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+        const canvas = document.createElement("canvas")
+        canvas.width = Math.max(1, Math.round(img.width * scale))
+        canvas.height = Math.max(1, Math.round(img.height * scale))
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return dataUrl
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        return canvas.toDataURL("image/jpeg", 0.82)
+      } catch (err) {
+        console.warn("Thumbnail compression skipped:", err)
+        return dataUrl
+      }
+    }
+
+    const thumbnailForSave = await compressThumbnail(post.thumbnail)
+
     const supabase = createClient()
 
     // Build payload once so it can be reused for API and local state
@@ -222,7 +254,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
           content: post.content,
           template_id: post.template,
           platform: post.platform,
-          thumbnail_url: post.thumbnail,
+          thumbnail_url: thumbnailForSave,
           author: post.author,
           design_config: designConfig,
         }),
@@ -249,7 +281,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
           content: post.content,
           template_id: post.template,
           platform: post.platform,
-          thumbnail_url: post.thumbnail,
+          thumbnail_url: thumbnailForSave,
           author: post.author,
           design_config: designConfig,
         })
