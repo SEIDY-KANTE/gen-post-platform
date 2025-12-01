@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useAppStore, type GeneratedPost } from "@/lib/store"
 import { useAuth } from "@/lib/hooks/useAuth"
-import { templates, type PlatformKey } from "@/lib/templates"
+import { templates, platformSizes, type PlatformKey } from "@/lib/templates"
 import { Sparkles, Download, Trash2, Eye, Calendar, Layout, Loader2, Search, Filter } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -37,7 +37,7 @@ import { useI18n } from "@/lib/i18n"
 
 export default function HistoryPage() {
   const { user } = useAuth()
-  const { posts, fetchPosts, deletePost } = useAppStore()
+  const { posts, fetchPosts, deletePost, user: appUser } = useAppStore()
   const [viewingPost, setViewingPost] = useState<GeneratedPost | null>(null)
   const [deletingPost, setDeletingPost] = useState<GeneratedPost | null>(null)
   const [exportTrigger, setExportTrigger] = useState(0)
@@ -45,6 +45,9 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [platformFilter, setPlatformFilter] = useState<"all" | PlatformKey>("all")
   const { t } = useI18n()
+  const isFreeUser = !appUser || appUser.plan === "free"
+
+  const watermarkLabelFor = (platformKey: PlatformKey) => `GenPost Free • ${platformSizes[platformKey].label}`
 
   // Fetch posts on mount
   useEffect(() => {
@@ -320,6 +323,8 @@ export default function HistoryPage() {
                 textAlign={viewingPost.textAlign || "center"}
                 padding={viewingPost.padding || 40}
                 backgroundImage={viewingPost.backgroundImage}
+                showWatermark={isFreeUser}
+                watermarkLabel={watermarkLabelFor(viewingPost.platform as PlatformKey)}
                 onExport={handleExportCallback}
                 exportTrigger={exportTrigger}
               />
