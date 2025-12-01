@@ -273,25 +273,29 @@ export default function AIStudioPage() {
   })
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
+    <div className="flex h-[calc(100vh-4rem)] flex-col overflow-y-auto">
       <DashboardHeader title={t("studio.ai.headerTitle", "AI Generator")} description={t("studio.ai.headerDesc", "Brief in one line and get social-ready canvases.")} />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-4 md:p-6 lg:flex-row">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 lg:flex-row lg:overflow-hidden">
         {/* Mobile Preview Toggle */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPreview(!showPreview)}
-          className="w-full gap-2 lg:hidden"
-        >
-          {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
-        </Button>
+        <div className="sticky top-0 z-30 lg:hidden">
+          <div className="bg-background/95 pb-2 pt-1 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="w-full gap-2"
+            >
+              {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPreview ? t("studio.ai.preview", "Preview") : t("studio.ai.preview", "Preview")}
+            </Button>
+          </div>
+        </div>
 
         {/* Mobile Preview (Sticky Top) */}
         {showPreview && (
-          <div className="lg:hidden">
-            <Card>
+          <div className="sticky top-14 z-20 lg:hidden">
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">Preview</CardTitle>
@@ -330,7 +334,7 @@ export default function AIStudioPage() {
         )}
 
         {/* Left Panel - Controls (Scrollable) */}
-        <ScrollArea className="flex-1 w-full min-h-0 lg:flex-none lg:w-96">
+        <ScrollArea className="w-full flex-1 lg:flex-none lg:w-96 lg:min-h-0" viewportClassName="h-auto lg:h-full">
           <div className="space-y-6 pr-4">
             {/* Credits indicator */}
             <Card>
