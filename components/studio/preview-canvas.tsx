@@ -25,6 +25,8 @@ interface PreviewCanvasProps {
   exportTrigger?: number
   maxHeight?: string
   exportEvenIfHidden?: boolean
+  showWatermark?: boolean
+  watermarkLabel?: string
 }
 
 const FONT_URLS: Record<string, string> = {
@@ -181,6 +183,28 @@ function parseGradient(
   return grad
 }
 
+function drawRoundedRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const r = Math.min(radius, width / 2, height / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + width - r, y)
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r)
+  ctx.lineTo(x + width, y + height - r)
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+  ctx.lineTo(x + r, y + height)
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r)
+  ctx.lineTo(x, y + r)
+  ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+}
+
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const paragraphs = text.split("\n")
   const allLines: string[] = []
@@ -236,6 +260,8 @@ export function PreviewCanvas({
   exportTrigger,
   maxHeight = "70vh",
   exportEvenIfHidden = false,
+  showWatermark = false,
+  watermarkLabel,
 }: PreviewCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -261,6 +287,54 @@ export function PreviewCanvas({
 
     canvas.width = width
     canvas.height = height
+
+    const drawWatermark = () => {
+      if (!showWatermark) return
+
+      const framePadding = Math.max(12, width * 0.035)
+      const frameRadius = Math.max(10, width * 0.02)
+      const frameLineWidth = Math.max(2, width * 0.0045)
+
+      // Outer frame
+      ctx.save()
+      ctx.strokeStyle = "rgba(255,255,255,0.35)"
+      ctx.lineWidth = frameLineWidth
+      ctx.setLineDash([width * 0.025, width * 0.015])
+      drawRoundedRectPath(ctx, framePadding, framePadding, width - framePadding * 2, height - framePadding * 2, frameRadius)
+      ctx.stroke()
+      ctx.restore()
+
+      // Label ribbon
+      const label = watermarkLabel || "GenPost Free"
+      const pillFontSize = Math.max(15, width * 0.03)
+      const pillPaddingX = Math.max(14, width * 0.02)
+      const pillPaddingY = Math.max(8, width * 0.012)
+
+      ctx.save()
+      ctx.font = `700 ${pillFontSize}px "Inter", Arial, sans-serif`
+      ctx.textBaseline = "middle"
+      ctx.textAlign = "left"
+
+      const textMetrics = ctx.measureText(label)
+      const pillWidth = textMetrics.width + pillPaddingX * 2
+      const pillHeight = pillFontSize + pillPaddingY * 2
+      const pillX = (width - pillWidth) / 2
+      const pillY = height - framePadding - pillHeight
+      const pillRadius = pillHeight / 2
+
+      const ribbon = ctx.createLinearGradient(pillX, pillY, pillX + pillWidth, pillY + pillHeight)
+      ribbon.addColorStop(0, "rgba(15,23,42,0.82)")
+      ribbon.addColorStop(1, "rgba(14,165,233,0.88)")
+
+      ctx.fillStyle = ribbon
+      drawRoundedRectPath(ctx, pillX, pillY, pillWidth, pillHeight, pillRadius)
+      ctx.fill()
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)"
+      const textY = pillY + pillHeight / 2
+      ctx.fillText(label, pillX + pillPaddingX, textY)
+      ctx.restore()
+    }
 
     const drawContent = () => {
       ctx.clearRect(0, 0, width, height)
@@ -324,6 +398,8 @@ export function PreviewCanvas({
         ctx.fillStyle = accentColor || textColor + "cc"
         ctx.fillText(`— ${author}`, x, startY + lines.length * lineHeight + authorFontSize * 1.5)
       }
+
+      drawWatermark()
     }
 
     const finalize = () => {
@@ -387,6 +463,7 @@ export function PreviewCanvas({
           ctx.fillStyle = accentColor || textColor + "cc"
           ctx.fillText(`— ${author}`, x, startY + lines.length * lineHeight + authorFontSize * 1.5)
         }
+        drawWatermark()
         finalize()
       }
       img.src = backgroundImage
@@ -411,6 +488,8 @@ export function PreviewCanvas({
     padding,
     backgroundImage,
     onRender,
+    showWatermark,
+    watermarkLabel,
     width,
     height,
   ])

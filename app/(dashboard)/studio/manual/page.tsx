@@ -82,6 +82,7 @@ export default function ManualStudioPage() {
 
   const canUseCustomBackground = user?.plan === "premium" || user?.plan === "pro"
   const canUseImages = user?.plan === "pro"
+  const isFreeUser = !user || user.plan === "free"
 
   const handleExport = useCallback(
     async (dataUrl: string) => {
@@ -282,28 +283,30 @@ export default function ManualStudioPage() {
                 </div>
               </CardHeader>
               <CardContent className="flex items-center justify-center">
-              <PreviewCanvas
-                platform={platform}
-                content={content}
-                author={author}
-                gradient={canvasGradient}
-                backgroundColor={canvasBackgroundColor}
-                borderColor={borderColor}
-                borderWidth={borderWidth}
-                textColor={textColor}
-                accentColor={accentColor}
-                fontFamily={fontFamily}
-                fontWeight={fontWeight}
-                fontSize={fontSize}
-                textAlign={textAlign}
-                padding={padding}
-                backgroundImage={backgroundImage || undefined}
-                onRender={setPreviewImageUrl}
-                maxHeight="30vh"
-              />
-            </CardContent>
-          </Card>
-        </div>
+                <PreviewCanvas
+                  platform={platform}
+                  content={content}
+                  author={author}
+                  gradient={canvasGradient}
+                  backgroundColor={canvasBackgroundColor}
+                  borderColor={borderColor}
+                  borderWidth={borderWidth}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontSize={fontSize}
+                  textAlign={textAlign}
+                  padding={padding}
+                  backgroundImage={backgroundImage || undefined}
+                  showWatermark={isFreeUser}
+                  watermarkLabel={`GenPost Free • ${platformSizes[platform].label}`}
+                  onRender={setPreviewImageUrl}
+                  maxHeight="30vh"
+                />
+              </CardContent>
+            </Card>
+          </div>
         )}
 
 
@@ -777,6 +780,8 @@ export default function ManualStudioPage() {
                 textAlign={textAlign}
                 padding={padding}
                 backgroundImage={backgroundImage || undefined}
+                showWatermark={isFreeUser}
+                watermarkLabel={`GenPost Free • ${platformSizes[platform].label}`}
                 onRender={setPreviewImageUrl}
                 onExport={handleExport}
                 exportTrigger={exportTrigger}

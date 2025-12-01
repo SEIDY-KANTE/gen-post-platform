@@ -58,6 +58,7 @@ export default function AIStudioPage() {
   const { t } = useI18n()
 
   const isPro = user?.plan === "pro" || user?.plan === "premium"
+  const isFreeUser = !user || user.plan === "free"
 
   const generateContent = async () => {
     if (!topic.trim()) {
@@ -316,7 +317,9 @@ export default function AIStudioPage() {
                   textAlign={textAlign}
                   padding={padding}
                   backgroundImage={backgroundImage || undefined}
-                  onRender={setPreviewImageUrl}
+                  showWatermark={isFreeUser}
+                  watermarkLabel={`GenPost Free • ${platformSizes[platform].label}`}
+                  onRender={setPreviewImageUrl} 
                   onExport={handleExport}
                   exportTrigger={exportTrigger}
                   maxHeight="30vh"
@@ -643,6 +646,8 @@ export default function AIStudioPage() {
                     textAlign={textAlign}
                     padding={padding}
                     backgroundImage={backgroundImage || undefined}
+                    showWatermark={isFreeUser}
+                    watermarkLabel={`GenPost Free • ${platformSizes[platform].label}`}
                     onRender={setPreviewImageUrl}
                     onExport={handleExport}
                     exportTrigger={exportTrigger}
@@ -676,6 +681,8 @@ export default function AIStudioPage() {
                         textAlign={textAlign}
                         padding={padding}
                         backgroundImage={backgroundImage || undefined}
+                        showWatermark={isFreeUser}
+                        watermarkLabel={`GenPost Free • ${platformSizes[p as PlatformKey].label}`}
                         maxHeight="200px"
                       />
                     </div>

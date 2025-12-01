@@ -237,9 +237,9 @@ export default function ViralStudioChat() {
   }, [messages, t]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="flex min-h-dvh w-full flex-col overflow-hidden bg-background text-foreground">
       {/* --- MAIN CHAT AREA --- */}
-      <main className="flex flex-1 flex-col">
+      <main className="flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* Header Configuration */}
         <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md sm:h-14 sm:flex-row sm:items-center sm:justify-between sm:py-0">
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -301,10 +301,10 @@ export default function ViralStudioChat() {
         </header>
 
         {/* Messages List */}
-        <div className="flex-1 overflow-hidden relative bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-opacity-10">
+        <div className="relative flex-1 min-h-0 overflow-hidden bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-opacity-10">
           <div
             ref={scrollRef}
-            className="h-[calc(100vh-13rem)] overflow-y-auto px-3 py-4 pb-32 space-y-8 md:px-10 md:py-10"
+            className="absolute inset-0 overflow-y-auto px-3 py-4 pb-40 space-y-8 md:px-10 md:py-10"
           >
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center opacity-80 select-none">
@@ -500,8 +500,8 @@ export default function ViralStudioChat() {
         </div>
 
         {/* Input Area */}
-        <div className="absolute bottom-6 left-0 right-0 px-4 md:left-[260px]">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-border/50 bg-background/80 p-2 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/10">
+        <div className="sticky bottom-0 z-20 border-t border-border/50 bg-background/95 px-4 pb-4 pt-3 shadow-[0_-12px_40px_-24px_rgba(0,0,0,0.6)] backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-border/50 bg-background/90 p-2 shadow-xl backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/10">
             <div className="relative flex items-end gap-2">
               <div className="flex pb-2 pl-1">
                 {/* <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
